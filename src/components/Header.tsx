@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Search, Grid3X3, ChevronDown } from "lucide-react";
+import { Menu, X, Search, Grid3X3 } from "lucide-react";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -9,6 +9,30 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
+
+// Define categories data within the Header component
+const categories = [
+  { 
+    id: 1, 
+    name: "Weddings", 
+    description: "Capture your special day"
+  },
+  { 
+    id: 2, 
+    name: "Portraits", 
+    description: "Professional headshots & portraits"
+  },
+  { 
+    id: 3, 
+    name: "Events", 
+    description: "Corporate & social events"
+  },
+  { 
+    id: 4, 
+    name: "Food", 
+    description: "Restaurant & culinary photography"
+  }
+];
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -67,7 +91,7 @@ export const Header = () => {
                   <NavigationMenuContent>
                     <div className="grid gap-3 p-6 w-[400px] md:w-[500px]">
                       <div className="grid grid-cols-2 gap-4">
-                        {categories.slice(0, 4).map((category) => (
+                        {categories.map((category) => (
                           <a key={category.id} href="#" className="block group">
                             <div className="font-medium mb-1 group-hover:text-primary transition-colors">
                               {category.name}
