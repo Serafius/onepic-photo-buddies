@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Search, Grid3X3, ChevronDown } from "lucide-react";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu";
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -20,9 +28,62 @@ export const Header = () => {
           
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <a href="#" className="text-gray-600 hover:text-primary transition-colors">Discover</a>
-            <a href="#" className="text-gray-600 hover:text-primary transition-colors">Categories</a>
-            <a href="#" className="text-gray-600 hover:text-primary transition-colors">How it Works</a>
+            <NavigationMenu>
+              <NavigationMenuList>
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger className="text-gray-600 hover:text-primary transition-colors">
+                    <Search className="w-4 h-4 mr-2" />
+                    Discover
+                  </NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <div className="grid gap-3 p-6 w-[400px]">
+                      <div className="grid grid-cols-2 gap-4">
+                        <a href="#" className="block group">
+                          <div className="font-medium mb-1 group-hover:text-primary transition-colors">
+                            Trending Photographers
+                          </div>
+                          <p className="text-sm text-gray-500">
+                            Discover top-rated professionals
+                          </p>
+                        </a>
+                        <a href="#" className="block group">
+                          <div className="font-medium mb-1 group-hover:text-primary transition-colors">
+                            New Arrivals
+                          </div>
+                          <p className="text-sm text-gray-500">
+                            Recently joined photographers
+                          </p>
+                        </a>
+                      </div>
+                    </div>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger className="text-gray-600 hover:text-primary transition-colors">
+                    <Grid3X3 className="w-4 h-4 mr-2" />
+                    Categories
+                  </NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <div className="grid gap-3 p-6 w-[400px] md:w-[500px]">
+                      <div className="grid grid-cols-2 gap-4">
+                        {categories.slice(0, 4).map((category) => (
+                          <a key={category.id} href="#" className="block group">
+                            <div className="font-medium mb-1 group-hover:text-primary transition-colors">
+                              {category.name}
+                            </div>
+                            <p className="text-sm text-gray-500">
+                              {category.description}
+                            </p>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
+
             <Button variant="outline" className="hover-scale border-primary text-primary hover:bg-primary hover:text-white">
               Sign In
             </Button>
@@ -41,14 +102,13 @@ export const Header = () => {
         {/* Mobile Navigation */}
         {isMenuOpen && (
           <div className="md:hidden py-4 space-y-4 animate-fade-down">
-            <a href="#" className="block text-gray-600 hover:text-primary transition-colors py-2">
+            <a href="#" className="flex items-center text-gray-600 hover:text-primary transition-colors py-2">
+              <Search className="w-4 h-4 mr-2" />
               Discover
             </a>
-            <a href="#" className="block text-gray-600 hover:text-primary transition-colors py-2">
+            <a href="#" className="flex items-center text-gray-600 hover:text-primary transition-colors py-2">
+              <Grid3X3 className="w-4 h-4 mr-2" />
               Categories
-            </a>
-            <a href="#" className="block text-gray-600 hover:text-primary transition-colors py-2">
-              How it Works
             </a>
             <div className="space-y-2 pt-2">
               <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary hover:text-white">
