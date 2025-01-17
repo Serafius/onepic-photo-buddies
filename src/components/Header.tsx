@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Search, Grid3X3 } from "lucide-react";
+import { Menu, X, Search, Grid3X3, LogIn } from "lucide-react";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -9,8 +9,18 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
 
-// Define categories data within the Header component
 const categories = [
   { 
     id: 1, 
@@ -36,6 +46,18 @@ const categories = [
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const { toast } = useToast();
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Here you would typically handle the login logic
+    toast({
+      title: "Login Attempted",
+      description: "This is a demo. Login functionality will be implemented soon.",
+    });
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
@@ -108,9 +130,45 @@ export const Header = () => {
               </NavigationMenuList>
             </NavigationMenu>
 
-            <Button variant="outline" className="hover-scale border-primary text-primary hover:bg-primary hover:text-white">
-              Sign In
-            </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="hover-scale border-primary text-primary hover:bg-primary hover:text-white">
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Sign In
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Sign In</DialogTitle>
+                  <DialogDescription>
+                    Enter your credentials to access your account
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleLogin} className="space-y-4 pt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="Enter your email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  </div>
+                  <Button type="submit" className="w-full">Sign In</Button>
+                </form>
+              </DialogContent>
+            </Dialog>
             <Button className="hover-scale bg-primary hover:bg-primary/90">Join Now</Button>
           </div>
 
@@ -136,6 +194,7 @@ export const Header = () => {
             </a>
             <div className="space-y-2 pt-2">
               <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary hover:text-white">
+                <LogIn className="w-4 h-4 mr-2" />
                 Sign In
               </Button>
               <Button className="w-full bg-primary hover:bg-primary/90">Join Now</Button>
