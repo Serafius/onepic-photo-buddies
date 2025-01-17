@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Search, Grid3X3, LogIn } from "lucide-react";
+import { Menu, X, Search, Grid3X3, LogIn, Camera } from "lucide-react";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
@@ -118,6 +118,35 @@ export const Header = () => {
                     </div>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
+
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger className="text-gray-600 hover:text-primary transition-colors">
+                    <Camera className="w-4 h-4 mr-2" />
+                    Photographers
+                  </NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <div className="grid gap-3 p-6 w-[400px]">
+                      <div className="grid grid-cols-2 gap-4">
+                        <a href="#" className="block group">
+                          <div className="font-medium mb-1 group-hover:text-primary transition-colors">
+                            Featured Photographers
+                          </div>
+                          <p className="text-sm text-gray-500">
+                            Discover our top photographers
+                          </p>
+                        </a>
+                        <a href="#" className="block group">
+                          <div className="font-medium mb-1 group-hover:text-primary transition-colors">
+                            Browse All
+                          </div>
+                          <p className="text-sm text-gray-500">
+                            Explore our entire photographer community
+                          </p>
+                        </a>
+                      </div>
+                    </div>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
 
@@ -181,6 +210,10 @@ export const Header = () => {
             <a href="#" className="flex items-center text-gray-600 hover:text-primary transition-colors py-2">
               <Grid3X3 className="w-4 h-4 mr-2" />
               Categories
+            </a>
+            <a href="#" className="flex items-center text-gray-600 hover:text-primary transition-colors py-2">
+              <Camera className="w-4 h-4 mr-2" />
+              Photographers
             </a>
             <div className="space-y-2 pt-2">
               <Button 
