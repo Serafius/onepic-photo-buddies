@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Search, Grid3X3, LogIn, Camera } from "lucide-react";
 import { Auth } from "@supabase/auth-ui-react";
@@ -49,6 +49,30 @@ export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN') {
+        setIsAuthDialogOpen(false);
+        toast({
+          title: "Welcome!",
+          description: "You have successfully signed in.",
+        });
+      } else if (event === 'SIGNED_OUT') {
+        toast({
+          title: "Signed out",
+          description: "You have been signed out successfully.",
+        });
+      } else if (event === 'USER_UPDATED') {
+        toast({
+          title: "Profile updated",
+          description: "Your profile has been updated successfully.",
+        });
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [toast]);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
@@ -178,13 +202,6 @@ export const Header = () => {
                     },
                   }}
                   providers={['google']}
-                  onError={(error) => {
-                    toast({
-                      variant: "destructive",
-                      title: "Authentication Error",
-                      description: error.message,
-                    });
-                  }}
                 />
               </DialogContent>
             </Dialog>
