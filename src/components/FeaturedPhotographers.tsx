@@ -34,7 +34,7 @@ export const FeaturedPhotographers = () => {
     <section className="py-16 bg-secondary/50">
       <div className="container">
         <h2 className="text-3xl font-bold mb-8 fade-in">Featured Photographers</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-8">
           {photographers.map((photographer) => (
             <Card key={photographer.id} className="overflow-hidden hover-scale glass-card">
               <div className="aspect-[3/2] relative">
