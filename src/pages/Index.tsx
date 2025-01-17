@@ -6,17 +6,16 @@ import { BrowsingGrid } from "@/components/BrowsingGrid";
 
 const Index = () => {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gray-50">
       <Header />
-      <main>
-        <Hero />
-        <div className="container mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            <div className="lg:col-span-3">
-              <CategorySection />
+      <main className="pt-20">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="lg:col-span-8">
               <BrowsingGrid />
             </div>
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-4 space-y-8">
+              <CategorySection />
               <FeaturedPhotographers />
             </div>
           </div>
