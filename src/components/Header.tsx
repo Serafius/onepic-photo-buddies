@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Search, Grid3X3, LogIn, Camera } from "lucide-react";
-import { Auth } from "@supabase/auth-ui-react";
-import { ThemeSupa } from "@supabase/auth-ui-shared";
-import { supabase } from "@/integrations/supabase/client";
+import { Menu, X, Search, Grid3X3, LogIn, Camera, LogOut } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -13,14 +12,6 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 
 const categories = [
   { 
@@ -47,32 +38,35 @@ const categories = [
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      });
+    } else {
+      navigate("/login");
+    }
+  };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN') {
-        setIsAuthDialogOpen(false);
-        toast({
-          title: "Welcome!",
-          description: "You have successfully signed in.",
-        });
-      } else if (event === 'SIGNED_OUT') {
+      if (event === 'SIGNED_OUT') {
         toast({
           title: "Signed out",
           description: "You have been signed out successfully.",
         });
-      } else if (event === 'USER_UPDATED') {
-        toast({
-          title: "Profile updated",
-          description: "Your profile has been updated successfully.",
-        });
+        navigate("/login");
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [toast]);
+  }, [toast, navigate]);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
@@ -174,38 +168,14 @@ export const Header = () => {
               </NavigationMenuList>
             </NavigationMenu>
 
-            <Dialog open={isAuthDialogOpen} onOpenChange={setIsAuthDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="hover-scale border-primary text-primary hover:bg-primary hover:text-white">
-                  <LogIn className="w-4 h-4 mr-2" />
-                  Sign In
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[400px]">
-                <DialogHeader>
-                  <DialogTitle>Welcome to OnePic</DialogTitle>
-                  <DialogDescription>
-                    Sign in to connect with photographers and manage your bookings
-                  </DialogDescription>
-                </DialogHeader>
-                <Auth
-                  supabaseClient={supabase}
-                  appearance={{
-                    theme: ThemeSupa,
-                    variables: {
-                      default: {
-                        colors: {
-                          brand: 'rgb(var(--primary))',
-                          brandAccent: 'rgb(var(--primary))',
-                        },
-                      },
-                    },
-                  }}
-                  providers={['google']}
-                />
-              </DialogContent>
-            </Dialog>
-            <Button className="hover-scale bg-primary hover:bg-primary/90">Join Now</Button>
+            <Button 
+              variant="outline" 
+              className="hover-scale border-primary text-primary hover:bg-primary hover:text-white"
+              onClick={handleSignOut}
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </Button>
           </div>
 
           {/* Mobile Menu Button */}
@@ -236,12 +206,11 @@ export const Header = () => {
               <Button 
                 variant="outline" 
                 className="w-full border-primary text-primary hover:bg-primary hover:text-white"
-                onClick={() => setIsAuthDialogOpen(true)}
+                onClick={handleSignOut}
               >
-                <LogIn className="w-4 h-4 mr-2" />
-                Sign In
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
               </Button>
-              <Button className="w-full bg-primary hover:bg-primary/90">Join Now</Button>
             </div>
           </div>
         )}
