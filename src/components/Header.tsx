@@ -4,6 +4,15 @@ import { Menu, X, Search, Grid3X3, LogIn, Camera, LogOut } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { Auth } from "@supabase/auth-ui-react";
+import { ThemeSupa } from "@supabase/auth-ui-shared";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -38,6 +47,7 @@ const categories = [
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -49,24 +59,27 @@ export const Header = () => {
         description: "Failed to sign out. Please try again.",
         variant: "destructive",
       });
-    } else {
-      navigate("/login");
     }
   };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session);
       if (event === 'SIGNED_OUT') {
         toast({
           title: "Signed out",
           description: "You have been signed out successfully.",
         });
-        navigate("/login");
+      } else if (event === 'SIGNED_IN') {
+        toast({
+          title: "Welcome back!",
+          description: "You have successfully signed in.",
+        });
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [toast, navigate]);
+  }, [toast]);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
@@ -168,14 +181,51 @@ export const Header = () => {
               </NavigationMenuList>
             </NavigationMenu>
 
-            <Button 
-              variant="outline" 
-              className="hover-scale border-primary text-primary hover:bg-primary hover:text-white"
-              onClick={handleSignOut}
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
+            {isAuthenticated ? (
+              <Button 
+                variant="outline" 
+                className="hover-scale border-primary text-primary hover:bg-primary hover:text-white"
+                onClick={handleSignOut}
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
+            ) : (
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="hover-scale border-primary text-primary hover:bg-primary hover:text-white"
+                  >
+                    <LogIn className="w-4 h-4 mr-2" />
+                    Sign In
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>Welcome to OnePic</DialogTitle>
+                  </DialogHeader>
+                  <div className="mt-4">
+                    <Auth
+                      supabaseClient={supabase}
+                      appearance={{ 
+                        theme: ThemeSupa,
+                        variables: {
+                          default: {
+                            colors: {
+                              brand: 'rgb(var(--primary))',
+                              brandAccent: 'rgb(var(--primary))',
+                            },
+                          },
+                        },
+                      }}
+                      theme="light"
+                      providers={[]}
+                    />
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -203,14 +253,51 @@ export const Header = () => {
               Photographers
             </a>
             <div className="space-y-2 pt-2">
-              <Button 
-                variant="outline" 
-                className="w-full border-primary text-primary hover:bg-primary hover:text-white"
-                onClick={handleSignOut}
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
-              </Button>
+              {isAuthenticated ? (
+                <Button 
+                  variant="outline" 
+                  className="w-full border-primary text-primary hover:bg-primary hover:text-white"
+                  onClick={handleSignOut}
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
+                </Button>
+              ) : (
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      className="w-full border-primary text-primary hover:bg-primary hover:text-white"
+                    >
+                      <LogIn className="w-4 h-4 mr-2" />
+                      Sign In
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Welcome to OnePic</DialogTitle>
+                    </DialogHeader>
+                    <div className="mt-4">
+                      <Auth
+                        supabaseClient={supabase}
+                        appearance={{ 
+                          theme: ThemeSupa,
+                          variables: {
+                            default: {
+                              colors: {
+                                brand: 'rgb(var(--primary))',
+                                brandAccent: 'rgb(var(--primary))',
+                              },
+                            },
+                          },
+                        }}
+                        theme="light"
+                        providers={[]}
+                      />
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              )}
             </div>
           </div>
         )}
