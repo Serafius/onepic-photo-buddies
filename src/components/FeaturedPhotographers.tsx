@@ -1,10 +1,11 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const photographers = [
   {
-    id: 1,
+    id: "f47ac10b-58cc-4372-a567-0e02b2c3d479", // Sarah Johnson's ID from our SQL
     name: "Sarah Johnson",
     specialty: "Wedding Photography",
     rating: 4.9,
@@ -30,12 +31,18 @@ const photographers = [
 ];
 
 export const FeaturedPhotographers = () => {
+  const navigate = useNavigate();
+
   return (
     <section className="bg-white rounded-lg shadow-sm p-6">
       <h2 className="text-xl font-semibold mb-4 text-primary">Featured Photographers</h2>
       <div className="space-y-4">
         {photographers.map((photographer) => (
-          <Card key={photographer.id} className="overflow-hidden hover-scale glass-card">
+          <Card 
+            key={photographer.id} 
+            className="overflow-hidden hover-scale glass-card cursor-pointer"
+            onClick={() => navigate(`/photographer/${photographer.id}`)}
+          >
             <div className="p-4 flex items-center space-x-4">
               <div className="w-16 h-16 rounded-full overflow-hidden">
                 <img

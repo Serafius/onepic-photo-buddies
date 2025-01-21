@@ -9,6 +9,112 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      booking_requests: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          id: string
+          message: string | null
+          photographer_id: string | null
+          status: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          message?: string | null
+          photographer_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          message?: string | null
+          photographer_id?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_requests_photographer_id_fkey"
+            columns: ["photographer_id"]
+            isOneToOne: false
+            referencedRelation: "photographers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      photographers: {
+        Row: {
+          bio: string | null
+          created_at: string
+          hourly_rate: number
+          id: string
+          location: string | null
+          name: string
+          rating: number | null
+          specialty: string | null
+          user_id: string | null
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string
+          hourly_rate: number
+          id?: string
+          location?: string | null
+          name: string
+          rating?: number | null
+          specialty?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string
+          hourly_rate?: number
+          id?: string
+          location?: string | null
+          name?: string
+          rating?: number | null
+          specialty?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      portfolio_images: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string
+          photographer_id: string | null
+          title: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url: string
+          photographer_id?: string | null
+          title?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string
+          photographer_id?: string | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_images_photographer_id_fkey"
+            columns: ["photographer_id"]
+            isOneToOne: false
+            referencedRelation: "photographers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
