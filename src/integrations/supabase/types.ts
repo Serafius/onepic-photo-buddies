@@ -11,6 +11,7 @@ export type Database = {
     Tables: {
       booking_requests: {
         Row: {
+          category_id: string | null
           client_id: string | null
           created_at: string
           id: string
@@ -19,6 +20,7 @@ export type Database = {
           status: string | null
         }
         Insert: {
+          category_id?: string | null
           client_id?: string | null
           created_at?: string
           id?: string
@@ -27,6 +29,7 @@ export type Database = {
           status?: string | null
         }
         Update: {
+          category_id?: string | null
           client_id?: string | null
           created_at?: string
           id?: string
@@ -36,7 +39,49 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "booking_requests_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "photographer_categories"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "booking_requests_photographer_id_fkey"
+            columns: ["photographer_id"]
+            isOneToOne: false
+            referencedRelation: "photographers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      photographer_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          photographer_id: string | null
+          price: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          photographer_id?: string | null
+          price: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          photographer_id?: string | null
+          price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "photographer_categories_photographer_id_fkey"
             columns: ["photographer_id"]
             isOneToOne: false
             referencedRelation: "photographers"
