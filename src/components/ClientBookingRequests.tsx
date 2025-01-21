@@ -50,7 +50,17 @@ export const ClientBookingRequests = () => {
           .eq('client_id', session.user.id);
 
         if (error) throw error;
-        setRequests(data || []);
+        
+        // Transform the data to match our interface
+        const transformedData: BookingRequest[] = (data || []).map(item => ({
+          id: item.id,
+          status: item.status,
+          created_at: item.created_at,
+          message: item.message,
+          photographer: item.photographers // Rename photographers to photographer
+        }));
+
+        setRequests(transformedData);
       } catch (error) {
         console.error('Error fetching requests:', error);
         toast({
