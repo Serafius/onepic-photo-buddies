@@ -26,6 +26,7 @@ export const PhotographerPortfolio = ({ photographerId }: { photographerId: stri
   const [photographer, setPhotographer] = useState<Photographer | null>(null);
   const [images, setImages] = useState<PortfolioImage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [message, setMessage] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -84,6 +85,7 @@ export const PhotographerPortfolio = ({ photographerId }: { photographerId: stri
           photographer_id: photographerId,
           client_id: session.user.id,
           status: "pending",
+          message: message,
         });
 
       if (error) throw error;
@@ -92,6 +94,9 @@ export const PhotographerPortfolio = ({ photographerId }: { photographerId: stri
         title: "Success",
         description: "Booking request sent successfully",
       });
+      
+      // Clear the message field after successful submission
+      setMessage("");
     } catch (error) {
       console.error("Error creating booking request:", error);
       toast({
@@ -124,9 +129,18 @@ export const PhotographerPortfolio = ({ photographerId }: { photographerId: stri
           )}
         </div>
         {photographer.bio && <p className="text-gray-700 mb-4">{photographer.bio}</p>}
-        <Button onClick={handleHire} className="btn-primary">
-          Hire Professional
-        </Button>
+        <div className="space-y-4">
+          <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Add a message to your booking request..."
+            className="w-full p-2 border rounded-md"
+            rows={4}
+          />
+          <Button onClick={handleHire} className="btn-primary">
+            Hire Professional
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
