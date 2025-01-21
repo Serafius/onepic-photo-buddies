@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { Package, Image } from "lucide-react";
 
 interface PortfolioImage {
   id: string;
@@ -139,6 +140,7 @@ export const PhotographerPortfolio = ({ photographerId }: { photographerId: stri
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Photographer Info Section */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">{photographer.name}</h1>
         <div className="flex items-center gap-4 mb-4">
@@ -151,24 +153,31 @@ export const PhotographerPortfolio = ({ photographerId }: { photographerId: stri
           )}
         </div>
         {photographer.bio && <p className="text-gray-700 mb-4">{photographer.bio}</p>}
+      </div>
 
-        {/* Categories Section */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">Photography Packages</h2>
-          <Accordion type="single" collapsible className="w-full">
-            {categories.map((category) => (
-              <AccordionItem key={category.id} value={category.id}>
-                <AccordionTrigger className="text-lg">
-                  {category.name} - ${category.price}
-                </AccordionTrigger>
-                <AccordionContent>
-                  <p className="text-gray-700">{category.description}</p>
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
+      {/* Photography Packages Section */}
+      <section className="mb-12">
+        <div className="flex items-center gap-2 mb-6">
+          <Package className="w-6 h-6" />
+          <h2 className="text-2xl font-semibold">Photography Packages</h2>
         </div>
+        <Accordion type="single" collapsible className="w-full">
+          {categories.map((category) => (
+            <AccordionItem key={category.id} value={category.id}>
+              <AccordionTrigger className="text-lg">
+                {category.name} - ${category.price}
+              </AccordionTrigger>
+              <AccordionContent>
+                <p className="text-gray-700">{category.description}</p>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </section>
 
+      {/* Booking Section */}
+      <section className="mb-12 bg-gray-50 p-6 rounded-lg">
+        <h2 className="text-xl font-semibold mb-4">Book a Session</h2>
         <div className="space-y-4">
           {categories.length > 0 && (
             <div className="space-y-2">
@@ -195,34 +204,37 @@ export const PhotographerPortfolio = ({ photographerId }: { photographerId: stri
             rows={4}
           />
           <Button onClick={handleHire} className="w-full">
-            Hire Professional
+            Book Now
           </Button>
         </div>
-      </div>
+      </section>
 
-      {/* Gallery Section */}
-      <div className="mt-12">
-        <h2 className="text-2xl font-semibold mb-6">Portfolio Gallery</h2>
+      {/* Portfolio Gallery Section */}
+      <section className="mt-12">
+        <div className="flex items-center gap-2 mb-6">
+          <Image className="w-6 h-6" />
+          <h2 className="text-2xl font-semibold">Portfolio Gallery</h2>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {images.map((image) => (
-            <Card key={image.id} className="overflow-hidden hover:scale-105 transition-transform duration-200">
-              <img
-                src={image.image_url}
-                alt={image.title || "Portfolio image"}
-                className="w-full h-64 object-cover"
-              />
-              {image.title && (
-                <div className="p-4">
-                  <h3 className="font-semibold">{image.title}</h3>
-                  {image.description && (
-                    <p className="text-gray-600 text-sm">{image.description}</p>
-                  )}
-                </div>
-              )}
+            <Card key={image.id} className="overflow-hidden group hover:shadow-lg transition-all duration-300">
+              <div className="relative aspect-square">
+                <img
+                  src={image.image_url}
+                  alt={image.title || "Portfolio image"}
+                  className="w-full h-full object-cover"
+                />
+                {(image.title || image.description) && (
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                    {image.title && <h3 className="font-semibold">{image.title}</h3>}
+                    {image.description && <p className="text-sm mt-1">{image.description}</p>}
+                  </div>
+                )}
+              </div>
             </Card>
           ))}
         </div>
-      </div>
+      </section>
     </div>
   );
 };
