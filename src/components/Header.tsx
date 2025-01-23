@@ -21,6 +21,7 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
+import { Input } from "@/components/ui/input";
 
 const categories = [
   { 
@@ -48,38 +49,47 @@ const categories = [
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isPhotographer, setIsPhotographer] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
+  // Temporary login function for testing
+  const handleTestLogin = () => {
+    if (username === "photo" && password === "photo") {
+      setIsAuthenticated(true);
+      setIsPhotographer(true);
       toast({
-        title: "Error",
-        description: "Failed to sign out. Please try again.",
+        title: "Logged in as Photographer",
+        description: "Welcome to the photographer view!",
+      });
+    } else if (username === "client" && password === "client") {
+      setIsAuthenticated(true);
+      setIsPhotographer(false);
+      toast({
+        title: "Logged in as Client",
+        description: "Welcome to the client view!",
+      });
+    } else {
+      toast({
+        title: "Invalid credentials",
+        description: "Please use the test credentials provided",
         variant: "destructive",
       });
     }
   };
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsAuthenticated(!!session);
-      if (event === 'SIGNED_OUT') {
-        toast({
-          title: "Signed out",
-          description: "You have been signed out successfully.",
-        });
-      } else if (event === 'SIGNED_IN') {
-        toast({
-          title: "Welcome back!",
-          description: "You have successfully signed in.",
-        });
-      }
+  const handleSignOut = () => {
+    setIsAuthenticated(false);
+    setIsPhotographer(false);
+    setUsername("");
+    setPassword("");
+    toast({
+      title: "Signed out",
+      description: "You have been signed out successfully.",
     });
-
-    return () => subscription.unsubscribe();
-  }, [toast]);
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
@@ -182,14 +192,19 @@ export const Header = () => {
             </NavigationMenu>
 
             {isAuthenticated ? (
-              <Button 
-                variant="outline" 
-                className="hover-scale border-primary text-primary hover:bg-primary hover:text-white"
-                onClick={handleSignOut}
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
-              </Button>
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-gray-600">
+                  Logged in as: {isPhotographer ? "Photographer" : "Client"}
+                </span>
+                <Button 
+                  variant="outline" 
+                  className="hover-scale border-primary text-primary hover:bg-primary hover:text-white"
+                  onClick={handleSignOut}
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
+                </Button>
+              </div>
             ) : (
               <Dialog>
                 <DialogTrigger asChild>
@@ -203,25 +218,34 @@ export const Header = () => {
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[425px]">
                   <DialogHeader>
-                    <DialogTitle>Welcome to OnePic</DialogTitle>
+                    <DialogTitle>Test Login</DialogTitle>
                   </DialogHeader>
-                  <div className="mt-4">
-                    <Auth
-                      supabaseClient={supabase}
-                      appearance={{ 
-                        theme: ThemeSupa,
-                        variables: {
-                          default: {
-                            colors: {
-                              brand: 'rgb(var(--primary))',
-                              brandAccent: 'rgb(var(--primary))',
-                            },
-                          },
-                        },
-                      }}
-                      theme="light"
-                      providers={[]}
-                    />
+                  <div className="mt-4 space-y-4">
+                    <div className="space-y-2">
+                      <Input
+                        type="text"
+                        placeholder="Username"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                      />
+                      <Input
+                        type="password"
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                      />
+                    </div>
+                    <Button 
+                      className="w-full"
+                      onClick={handleTestLogin}
+                    >
+                      Login
+                    </Button>
+                    <div className="text-sm text-gray-500">
+                      Test credentials:<br />
+                      Photographer: username="photo" password="photo"<br />
+                      Client: username="client" password="client"
+                    </div>
                   </div>
                 </DialogContent>
               </Dialog>
@@ -252,8 +276,11 @@ export const Header = () => {
               <Camera className="w-4 h-4 mr-2" />
               Photographers
             </a>
-            <div className="space-y-2 pt-2">
-              {isAuthenticated ? (
+            {isAuthenticated ? (
+              <div className="space-y-2 pt-2">
+                <div className="text-sm text-gray-600 py-2">
+                  Logged in as: {isPhotographer ? "Photographer" : "Client"}
+                </div>
                 <Button 
                   variant="outline" 
                   className="w-full border-primary text-primary hover:bg-primary hover:text-white"
@@ -262,43 +289,52 @@ export const Header = () => {
                   <LogOut className="w-4 h-4 mr-2" />
                   Sign Out
                 </Button>
-              ) : (
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      className="w-full border-primary text-primary hover:bg-primary hover:text-white"
-                    >
-                      <LogIn className="w-4 h-4 mr-2" />
-                      Sign In
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                      <DialogTitle>Welcome to OnePic</DialogTitle>
-                    </DialogHeader>
-                    <div className="mt-4">
-                      <Auth
-                        supabaseClient={supabase}
-                        appearance={{ 
-                          theme: ThemeSupa,
-                          variables: {
-                            default: {
-                              colors: {
-                                brand: 'rgb(var(--primary))',
-                                brandAccent: 'rgb(var(--primary))',
-                              },
-                            },
-                          },
-                        }}
-                        theme="light"
-                        providers={[]}
+              </div>
+            ) : (
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="w-full border-primary text-primary hover:bg-primary hover:text-white"
+                  >
+                    <LogIn className="w-4 h-4 mr-2" />
+                    Sign In
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>Test Login</DialogTitle>
+                  </DialogHeader>
+                  <div className="mt-4 space-y-4">
+                    <div className="space-y-2">
+                      <Input
+                        type="text"
+                        placeholder="Username"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                      />
+                      <Input
+                        type="password"
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
                       />
                     </div>
-                  </DialogContent>
-                </Dialog>
-              )}
-            </div>
+                    <Button 
+                      className="w-full"
+                      onClick={handleTestLogin}
+                    >
+                      Login
+                    </Button>
+                    <div className="text-sm text-gray-500">
+                      Test credentials:<br />
+                      Photographer: username="photo" password="photo"<br />
+                      Client: username="client" password="client"
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
         )}
       </nav>
