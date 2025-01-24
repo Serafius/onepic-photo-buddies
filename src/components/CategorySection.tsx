@@ -30,6 +30,20 @@ const categories = [
     image: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7",
     description: "Restaurant & culinary photography",
     path: "/category/food"
+  },
+  { 
+    id: 5, 
+    name: "Nature", 
+    image: "https://images.unsplash.com/photo-1469474968028-56623f02e42e",
+    description: "Landscape and wildlife photography",
+    path: "/category/nature"
+  },
+  { 
+    id: 6, 
+    name: "Wildlife", 
+    image: "https://images.unsplash.com/photo-1518877593221-1f28583780b4",
+    description: "Capture amazing wildlife moments",
+    path: "/category/wildlife"
   }
 ];
 
@@ -44,7 +58,7 @@ export const CategorySection = () => {
           View All
         </button>
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {categories.map((category) => (
           <Card
             key={category.id}
@@ -60,6 +74,7 @@ export const CategorySection = () => {
             </div>
             <div className="p-3">
               <h3 className="text-sm font-semibold text-primary">{category.name}</h3>
+              <p className="text-xs text-gray-500 mt-1">{category.description}</p>
             </div>
           </Card>
         ))}
