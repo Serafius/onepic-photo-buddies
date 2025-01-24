@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 
 const photographers = [
   {
-    id: "moutasem-id", // We'll use a temporary ID for now
+    id: "moutasem-id", // We'll keep this special ID for Moutasem
     name: "Moutasem Bellah",
     specialty: "Event Photography",
     rating: 5.0,
@@ -21,7 +21,7 @@ const photographers = [
     location: "New York, NY",
   },
   {
-    id: 2,
+    id: "b47ac10b-58cc-4372-a567-0e02b2c3d480",
     name: "Michael Chen",
     specialty: "Portrait Photography",
     rating: 4.8,
@@ -29,7 +29,7 @@ const photographers = [
     location: "Los Angeles, CA",
   },
   {
-    id: 3,
+    id: "c47ac10b-58cc-4372-a567-0e02b2c3d481",
     name: "Emma Davis",
     specialty: "Event Photography",
     rating: 4.7,
