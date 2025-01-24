@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Heart, MessageCircle, Share2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const photos = [
   {
@@ -9,7 +10,8 @@ const photos = [
     comments: 12,
     author: "Sarah Smith",
     description: "Perfect morning light in my workspace",
-    category: "Lifestyle"
+    category: "Lifestyle",
+    photographerId: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
   },
   {
     id: 2,
@@ -59,11 +61,17 @@ const photos = [
 ];
 
 export const BrowsingGrid = () => {
+  const navigate = useNavigate();
+
   return (
     <section className="py-8">
       <div className="space-y-6">
         {photos.map((photo) => (
-          <Card key={photo.id} className="overflow-hidden hover-scale glass-card">
+          <Card 
+            key={photo.id} 
+            className="overflow-hidden hover-scale glass-card cursor-pointer"
+            onClick={() => navigate(`/photographer/${photo.photographerId}`)}
+          >
             <div className="p-4">
               <div className="flex items-center space-x-3 mb-4">
                 <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">

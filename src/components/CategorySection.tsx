@@ -1,34 +1,41 @@
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
 
 const categories = [
   { 
     id: 1, 
     name: "Weddings", 
     image: "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07",
-    description: "Capture your special day"
+    description: "Capture your special day",
+    path: "/category/weddings"
   },
   { 
     id: 2, 
     name: "Portraits", 
     image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b",
-    description: "Professional headshots & portraits"
+    description: "Professional headshots & portraits",
+    path: "/category/portraits"
   },
   { 
     id: 3, 
     name: "Events", 
     image: "https://images.unsplash.com/photo-1518770660439-4636190af475",
-    description: "Corporate & social events"
+    description: "Corporate & social events",
+    path: "/category/events"
   },
   { 
     id: 4, 
     name: "Food", 
     image: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7",
-    description: "Restaurant & culinary photography"
+    description: "Restaurant & culinary photography",
+    path: "/category/food"
   }
 ];
 
 export const CategorySection = () => {
+  const navigate = useNavigate();
+
   return (
     <section className="bg-white rounded-lg shadow-sm p-6">
       <div className="flex items-center justify-between mb-4">
@@ -42,6 +49,7 @@ export const CategorySection = () => {
           <Card
             key={category.id}
             className="hover-scale glass-card cursor-pointer"
+            onClick={() => navigate(category.path)}
           >
             <div className="aspect-[4/3] relative overflow-hidden rounded-t-lg">
               <img
