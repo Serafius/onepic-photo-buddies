@@ -117,17 +117,6 @@ export const PhotographerPortfolio = ({ photographerId }: { photographerId: stri
   }, [photographerId, toast]);
 
   const handleCategoryClick = async (category: typeof staticCategories[0]) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      toast({
-        title: "Sign in required",
-        description: "Please sign in to book a photographer",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setMessage(category.bookingMessage);
     const bookingSection = document.getElementById('booking-section');
     if (bookingSection) {
