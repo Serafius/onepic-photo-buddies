@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Package, Image } from "lucide-react";
+import { Package, Image, Camera } from "lucide-react";
 
 interface PortfolioImage {
   id: string;
@@ -32,6 +32,33 @@ interface Category {
   description: string | null;
   price: number;
 }
+
+const staticCategories = [
+  { 
+    id: 1, 
+    name: "Weddings", 
+    image: "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07",
+    description: "Capture your special day",
+  },
+  { 
+    id: 2, 
+    name: "Portraits", 
+    image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b",
+    description: "Professional headshots & portraits",
+  },
+  { 
+    id: 3, 
+    name: "Events", 
+    image: "https://images.unsplash.com/photo-1518770660439-4636190af475",
+    description: "Corporate & social events",
+  },
+  { 
+    id: 4, 
+    name: "Food", 
+    image: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7",
+    description: "Restaurant & culinary photography",
+  }
+];
 
 // Static images to complement database images
 const staticImages = [
@@ -235,6 +262,31 @@ export const PhotographerPortfolio = ({ photographerId }: { photographerId: stri
           <Button onClick={handleHire} className="w-full">
             Book Now
           </Button>
+        </div>
+      </section>
+
+      {/* Categories Section */}
+      <section className="mt-12 mb-8">
+        <div className="flex items-center gap-2 mb-6">
+          <Camera className="w-6 h-6" />
+          <h2 className="text-2xl font-semibold">Photography Categories</h2>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {staticCategories.map((category) => (
+            <Card key={category.id} className="overflow-hidden group hover:shadow-lg transition-all duration-300">
+              <div className="relative aspect-square">
+                <img
+                  src={category.image}
+                  alt={category.name}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black/60 text-white p-4 flex flex-col justify-end transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                  <h3 className="font-semibold">{category.name}</h3>
+                  <p className="text-sm mt-1 text-gray-200">{category.description}</p>
+                </div>
+              </div>
+            </Card>
+          ))}
         </div>
       </section>
 
