@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Gallery, Upload } from "lucide-react";
+import { Images, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -133,7 +133,7 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Gallery className="h-6 w-6" />
+            <Images className="h-6 w-6" />
             <CardTitle>Portfolio Management</CardTitle>
           </div>
         </CardHeader>
@@ -186,7 +186,7 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Gallery className="h-6 w-6" />
+            <Images className="h-6 w-6" />
             <CardTitle>Current Portfolio</CardTitle>
           </div>
         </CardHeader>
