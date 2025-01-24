@@ -39,52 +39,28 @@ const staticCategories = [
     name: "Weddings", 
     image: "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07",
     description: "Capture your special day",
+    bookingMessage: "Book a wedding photography session",
   },
   { 
     id: 2, 
     name: "Portraits", 
     image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b",
     description: "Professional headshots & portraits",
+    bookingMessage: "Book a portrait session",
   },
   { 
     id: 3, 
     name: "Events", 
     image: "https://images.unsplash.com/photo-1518770660439-4636190af475",
     description: "Corporate & social events",
+    bookingMessage: "Book an event photographer",
   },
   { 
     id: 4, 
     name: "Food", 
     image: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7",
     description: "Restaurant & culinary photography",
-  }
-];
-
-// Static images to complement database images
-const staticImages = [
-  {
-    id: 'static-1',
-    image_url: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158',
-    title: 'Professional Portrait Session',
-    description: 'Corporate headshot in natural lighting'
-  },
-  {
-    id: 'static-2',
-    image_url: 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d',
-    title: 'Lifestyle Photography',
-    description: 'Candid workspace photography'
-  },
-  {
-    id: 'static-3',
-    image_url: 'https://images.unsplash.com/photo-1582562124811-c09040d0a901',
-    title: 'Pet Photography',
-    description: 'Capturing precious moments with your furry friends'
-  },
-  {
-    id: 'static-4',
-    image_url: 'https://images.unsplash.com/photo-1721322800607-8c38375eef04',
-    title: 'Interior Photography',
-    description: 'Real estate and architectural photography'
+    bookingMessage: "Book a food photography session",
   }
 ];
 
@@ -101,7 +77,6 @@ export const PhotographerPortfolio = ({ photographerId }: { photographerId: stri
   useEffect(() => {
     const fetchPortfolio = async () => {
       try {
-        // Fetch photographer details
         const { data: photographerData, error: photographerError } = await supabase
           .from("photographers")
           .select("*")
@@ -111,17 +86,14 @@ export const PhotographerPortfolio = ({ photographerId }: { photographerId: stri
         if (photographerError) throw photographerError;
         setPhotographer(photographerData);
 
-        // Fetch portfolio images
         const { data: imagesData, error: imagesError } = await supabase
           .from("portfolio_images")
           .select("*")
           .eq("photographer_id", photographerId);
 
         if (imagesError) throw imagesError;
-        // Combine database images with static images
-        setImages([...imagesData, ...staticImages]);
+        setImages(imagesData);
 
-        // Fetch categories
         const { data: categoriesData, error: categoriesError } = await supabase
           .from("photographer_categories")
           .select("*")
@@ -144,45 +116,22 @@ export const PhotographerPortfolio = ({ photographerId }: { photographerId: stri
     fetchPortfolio();
   }, [photographerId, toast]);
 
-  const handleHire = async () => {
+  const handleCategoryClick = async (category: typeof staticCategories[0]) => {
     const { data: { session } } = await supabase.auth.getSession();
     
     if (!session) {
       toast({
         title: "Sign in required",
-        description: "Please sign in to hire a photographer",
+        description: "Please sign in to book a photographer",
         variant: "destructive",
       });
       return;
     }
 
-    try {
-      const { error } = await supabase
-        .from("booking_requests")
-        .insert({
-          photographer_id: photographerId,
-          client_id: session.user.id,
-          status: "pending",
-          message: message,
-          category_id: selectedCategory || null,
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Booking request sent successfully",
-      });
-      
-      setMessage("");
-      setSelectedCategory("");
-    } catch (error) {
-      console.error("Error creating booking request:", error);
-      toast({
-        title: "Error",
-        description: "Failed to send booking request",
-        variant: "destructive",
-      });
+    setMessage(category.bookingMessage);
+    const bookingSection = document.getElementById('booking-section');
+    if (bookingSection) {
+      bookingSection.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
@@ -231,49 +180,19 @@ export const PhotographerPortfolio = ({ photographerId }: { photographerId: stri
         </Accordion>
       </section>
 
-      {/* Booking Section */}
-      <section className="mb-12 bg-gray-50 p-6 rounded-lg">
-        <h2 className="text-xl font-semibold mb-4">Book a Session</h2>
-        <div className="space-y-4">
-          {categories.length > 0 && (
-            <div className="space-y-2">
-              <Label>Select a Package (Optional)</Label>
-              <RadioGroup value={selectedCategory} onValueChange={setSelectedCategory}>
-                {categories.map((category) => (
-                  <div key={category.id} className="flex items-center space-x-2">
-                    <RadioGroupItem value={category.id} id={category.id} />
-                    <Label htmlFor={category.id}>{category.name} - ${category.price}</Label>
-                  </div>
-                ))}
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="" id="no-category" />
-                  <Label htmlFor="no-category">No package (hourly rate only)</Label>
-                </div>
-              </RadioGroup>
-            </div>
-          )}
-          <textarea
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Add a message to your booking request..."
-            className="w-full p-2 border rounded-md"
-            rows={4}
-          />
-          <Button onClick={handleHire} className="w-full">
-            Book Now
-          </Button>
-        </div>
-      </section>
-
       {/* Categories Section */}
       <section className="mt-12 mb-8">
         <div className="flex items-center gap-2 mb-6">
           <Camera className="w-6 h-6" />
-          <h2 className="text-2xl font-semibold">Photography Categories</h2>
+          <h2 className="text-2xl font-semibold">Book by Category</h2>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {staticCategories.map((category) => (
-            <Card key={category.id} className="overflow-hidden group hover:shadow-lg transition-all duration-300">
+            <Card 
+              key={category.id} 
+              className="overflow-hidden group hover:shadow-lg transition-all duration-300 cursor-pointer"
+              onClick={() => handleCategoryClick(category)}
+            >
               <div className="relative aspect-square">
                 <img
                   src={category.image}
@@ -283,10 +202,30 @@ export const PhotographerPortfolio = ({ photographerId }: { photographerId: stri
                 <div className="absolute inset-0 bg-black/60 text-white p-4 flex flex-col justify-end transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
                   <h3 className="font-semibold">{category.name}</h3>
                   <p className="text-sm mt-1 text-gray-200">{category.description}</p>
+                  <Button variant="secondary" size="sm" className="mt-2">
+                    Book Now
+                  </Button>
                 </div>
               </div>
             </Card>
           ))}
+        </div>
+      </section>
+
+      {/* Booking Section */}
+      <section id="booking-section" className="mb-12 bg-gray-50 p-6 rounded-lg">
+        <h2 className="text-xl font-semibold mb-4">Book a Session</h2>
+        <div className="space-y-4">
+          <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Add a message to your booking request..."
+            className="w-full p-2 border rounded-md"
+            rows={4}
+          />
+          <Button onClick={() => { /* Handle booking logic here */ }} className="w-full">
+            Book Now
+          </Button>
         </div>
       </section>
 
