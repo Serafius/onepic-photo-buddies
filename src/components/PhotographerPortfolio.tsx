@@ -33,6 +33,34 @@ interface Category {
   price: number;
 }
 
+// Static images to complement database images
+const staticImages = [
+  {
+    id: 'static-1',
+    image_url: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158',
+    title: 'Professional Portrait Session',
+    description: 'Corporate headshot in natural lighting'
+  },
+  {
+    id: 'static-2',
+    image_url: 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d',
+    title: 'Lifestyle Photography',
+    description: 'Candid workspace photography'
+  },
+  {
+    id: 'static-3',
+    image_url: 'https://images.unsplash.com/photo-1582562124811-c09040d0a901',
+    title: 'Pet Photography',
+    description: 'Capturing precious moments with your furry friends'
+  },
+  {
+    id: 'static-4',
+    image_url: 'https://images.unsplash.com/photo-1721322800607-8c38375eef04',
+    title: 'Interior Photography',
+    description: 'Real estate and architectural photography'
+  }
+];
+
 export const PhotographerPortfolio = ({ photographerId }: { photographerId: string }) => {
   const [photographer, setPhotographer] = useState<Photographer | null>(null);
   const [images, setImages] = useState<PortfolioImage[]>([]);
@@ -63,7 +91,8 @@ export const PhotographerPortfolio = ({ photographerId }: { photographerId: stri
           .eq("photographer_id", photographerId);
 
         if (imagesError) throw imagesError;
-        setImages(imagesData);
+        // Combine database images with static images
+        setImages([...imagesData, ...staticImages]);
 
         // Fetch categories
         const { data: categoriesData, error: categoriesError } = await supabase
