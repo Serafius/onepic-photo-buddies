@@ -92,6 +92,7 @@ export type Database = {
       photographers: {
         Row: {
           bio: string | null
+          city: string | null
           created_at: string
           hourly_rate: number
           id: string
@@ -99,10 +100,12 @@ export type Database = {
           name: string
           rating: number | null
           specialty: string | null
+          state: string | null
           user_id: string | null
         }
         Insert: {
           bio?: string | null
+          city?: string | null
           created_at?: string
           hourly_rate: number
           id?: string
@@ -110,10 +113,12 @@ export type Database = {
           name: string
           rating?: number | null
           specialty?: string | null
+          state?: string | null
           user_id?: string | null
         }
         Update: {
           bio?: string | null
+          city?: string | null
           created_at?: string
           hourly_rate?: number
           id?: string
@@ -121,6 +126,7 @@ export type Database = {
           name?: string
           rating?: number | null
           specialty?: string | null
+          state?: string | null
           user_id?: string | null
         }
         Relationships: []
