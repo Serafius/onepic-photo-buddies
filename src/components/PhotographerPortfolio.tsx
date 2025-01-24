@@ -3,10 +3,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { Package, Image, Camera } from "lucide-react";
 
 interface PortfolioImage {
@@ -24,6 +22,7 @@ interface Photographer {
   location: string | null;
   rating: number | null;
   bio: string | null;
+  image?: string;
 }
 
 interface Category {
@@ -64,7 +63,20 @@ const staticCategories = [
   }
 ];
 
-export const PhotographerPortfolio = ({ photographerId }: { photographerId: string }) => {
+// Temporary mock data for Moutasem
+const mockPhotographer = {
+  id: "moutasem-id",
+  name: "Moutasem Bellah",
+  specialty: "Event Photography",
+  hourly_rate: 150,
+  location: "Luxembourg, Alzette",
+  rating: 5.0,
+  bio: "Professional event photographer with a passion for capturing memorable moments.",
+  image: "/lovable-uploads/71da2de9-90e4-4e69-a867-55b6102a0bdd.png"
+};
+
+export const PhotographerPortfolio = () => {
+  const { id } = useParams();
   const [photographer, setPhotographer] = useState<Photographer | null>(null);
   const [images, setImages] = useState<PortfolioImage[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -77,10 +89,19 @@ export const PhotographerPortfolio = ({ photographerId }: { photographerId: stri
   useEffect(() => {
     const fetchPortfolio = async () => {
       try {
+        // Handle mock data for Moutasem
+        if (id === "moutasem-id") {
+          setPhotographer(mockPhotographer);
+          setImages([]);
+          setCategories([]);
+          setIsLoading(false);
+          return;
+        }
+
         const { data: photographerData, error: photographerError } = await supabase
           .from("photographers")
           .select("*")
-          .eq("id", photographerId)
+          .eq("id", id)
           .single();
 
         if (photographerError) throw photographerError;
@@ -89,7 +110,7 @@ export const PhotographerPortfolio = ({ photographerId }: { photographerId: stri
         const { data: imagesData, error: imagesError } = await supabase
           .from("portfolio_images")
           .select("*")
-          .eq("photographer_id", photographerId);
+          .eq("photographer_id", id);
 
         if (imagesError) throw imagesError;
         setImages(imagesData);
@@ -97,7 +118,7 @@ export const PhotographerPortfolio = ({ photographerId }: { photographerId: stri
         const { data: categoriesData, error: categoriesError } = await supabase
           .from("photographer_categories")
           .select("*")
-          .eq("photographer_id", photographerId);
+          .eq("photographer_id", id);
 
         if (categoriesError) throw categoriesError;
         setCategories(categoriesData);
@@ -114,7 +135,7 @@ export const PhotographerPortfolio = ({ photographerId }: { photographerId: stri
     };
 
     fetchPortfolio();
-  }, [photographerId, toast]);
+  }, [id, toast]);
 
   const handleCategoryClick = async (category: typeof staticCategories[0]) => {
     setMessage(category.bookingMessage);
@@ -136,15 +157,31 @@ export const PhotographerPortfolio = ({ photographerId }: { photographerId: stri
     <div className="container mx-auto px-4 py-8">
       {/* Photographer Info Section */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">{photographer.name}</h1>
-        <div className="flex items-center gap-4 mb-4">
-          <span className="text-lg font-semibold">${photographer.hourly_rate}/hour</span>
-          <span className="text-gray-600">{photographer.location}</span>
-          {photographer.rating && (
-            <span className="flex items-center">
-              ⭐ {photographer.rating.toFixed(1)}
-            </span>
-          )}
+        <div className="flex items-center gap-6 mb-4">
+          <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-primary/10">
+            <img
+              src={photographer.image || "https://via.placeholder.com/128"}
+              alt={photographer.name}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold mb-2">{photographer.name}</h1>
+            <div className="flex items-center gap-4 mb-2">
+              <span className="text-lg font-semibold">${photographer.hourly_rate}/hour</span>
+              <span className="text-gray-600">{photographer.location}</span>
+              {photographer.rating && (
+                <span className="flex items-center">
+                  ⭐ {photographer.rating.toFixed(1)}
+                </span>
+              )}
+            </div>
+            {photographer.specialty && (
+              <span className="inline-block bg-primary/5 text-primary px-3 py-1 rounded-full text-sm">
+                {photographer.specialty}
+              </span>
+            )}
+          </div>
         </div>
         {photographer.bio && <p className="text-gray-700 mb-4">{photographer.bio}</p>}
       </div>

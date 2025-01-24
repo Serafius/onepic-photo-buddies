@@ -12,7 +12,7 @@ function App() {
         <Route path="/" element={<Index />} />
         <Route 
           path="/photographer/:id" 
-          element={<PhotographerPortfolio photographerId="f47ac10b-58cc-4372-a567-0e02b2c3d479" />} 
+          element={<PhotographerPortfolio />} 
         />
         <Route 
           path="/photographer/:id/manage" 
