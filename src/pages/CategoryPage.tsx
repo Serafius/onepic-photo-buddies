@@ -32,7 +32,7 @@ export const CategoryPage = () => {
       const from = page * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
 
-      // Query portfolio images and join with photographers table
+      // Query portfolio images filtered by category and join with photographers table
       const { data, error } = await supabase
         .from('portfolio_images')
         .select(`
@@ -44,6 +44,7 @@ export const CategoryPage = () => {
             name
           )
         `)
+        .eq('category_name', category?.toLowerCase()) // Filter by category
         .range(from, to);
 
       if (error) throw error;
@@ -60,7 +61,7 @@ export const CategoryPage = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [page, isLoading, hasMore]);
+  }, [page, isLoading, hasMore, category]);
 
   useEffect(() => {
     // Reset state when category changes
