@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useParams } from "react-router-dom";
 
 interface Photo {
   id: string;
@@ -18,6 +19,7 @@ interface Photo {
 }
 
 export const BrowsingGrid = () => {
+  const { category } = useParams();
   const { toast } = useToast();
   const [likedPhotos, setLikedPhotos] = useState<string[]>([]);
   const [photoData, setPhotoData] = useState<Photo[]>([]);
@@ -27,12 +29,12 @@ export const BrowsingGrid = () => {
 
   useEffect(() => {
     fetchPhotos();
-  }, []);
+  }, [category]);
 
   const fetchPhotos = async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
+      let query = supabase
         .from('portfolio_images')
         .select(`
           id,
@@ -44,8 +46,14 @@ export const BrowsingGrid = () => {
             name
           )
         `)
-        .order('created_at', { ascending: false })
-        .limit(20);
+        .order('created_at', { ascending: false });
+
+      // If we're on a category page, filter by that category
+      if (category) {
+        query = query.ilike('category_name', category);
+      }
+
+      const { data, error } = await query.limit(20);
 
       if (error) throw error;
 
@@ -102,6 +110,14 @@ export const BrowsingGrid = () => {
     return (
       <div className="flex justify-center items-center min-h-[200px]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!isLoading && photoData.length === 0) {
+    return (
+      <div className="flex justify-center items-center min-h-[200px]">
+        <p className="text-gray-500">No photos found{category ? ` in ${category} category` : ''}.</p>
       </div>
     );
   }

@@ -4,28 +4,28 @@ import { useNavigate } from "react-router-dom";
 const categories = [
   { 
     id: 1, 
-    name: "Wedding", 
+    name: "wedding", 
     image: "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07",
     description: "Capture your special day",
     path: "/category/wedding"
   },
   { 
     id: 2, 
-    name: "Portraits", 
+    name: "portraits", 
     image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b",
     description: "Professional headshots & portraits",
     path: "/category/portraits"
   },
   { 
     id: 3, 
-    name: "Events", 
+    name: "events", 
     image: "https://images.unsplash.com/photo-1518770660439-4636190af475",
     description: "Corporate & social events",
     path: "/category/events"
   },
   { 
     id: 4, 
-    name: "Food", 
+    name: "food", 
     image: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7",
     description: "Restaurant & culinary photography",
     path: "/category/food"
@@ -36,7 +36,7 @@ export const CategorySection = () => {
   const navigate = useNavigate();
 
   const handleCategoryClick = (category: string) => {
-    navigate(`/category/${category.toLowerCase()}`);
+    navigate(`/category/${category}`); // Remove toLowerCase() since categories are already lowercase
   };
 
   return (
@@ -59,7 +59,7 @@ export const CategorySection = () => {
               />
             </div>
             <div className="p-3">
-              <h3 className="text-sm font-semibold text-primary">{category.name}</h3>
+              <h3 className="text-sm font-semibold text-primary capitalize">{category.name}</h3>
               <p className="text-xs text-gray-500 mt-1">{category.description}</p>
             </div>
           </Card>
