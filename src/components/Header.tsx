@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Search, Grid3X3, LogIn, Camera, LogOut, Image } from "lucide-react";
+import { Menu, X, Search, Grid3X3, LogIn, Camera, LogOut, Image, Settings } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -197,14 +197,24 @@ export const Header = () => {
                   Logged in as: {isPhotographer ? "Photographer" : "Client"}
                 </span>
                 {isPhotographer && (
-                  <Button 
-                    variant="outline" 
-                    className="hover-scale border-primary text-primary hover:bg-primary hover:text-white"
-                    onClick={() => navigate('/photographer/f47ac10b-58cc-4372-a567-0e02b2c3d479')}
-                  >
-                    <Image className="w-4 h-4 mr-2" />
-                    My Portfolio
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      className="hover-scale border-primary text-primary hover:bg-primary hover:text-white"
+                      onClick={() => navigate(`/photographer/${user?.id}`)}
+                    >
+                      <Image className="w-4 h-4 mr-2" />
+                      My Portfolio
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="hover-scale border-primary text-primary hover:bg-primary hover:text-white"
+                      onClick={() => navigate(`/photographer/${user?.id}/manage`)}
+                    >
+                      <Settings className="w-4 h-4 mr-2" />
+                      Manage Portfolio
+                    </Button>
+                  </div>
                 )}
                 <Button 
                   variant="outline" 
@@ -290,10 +300,18 @@ export const Header = () => {
               <Button 
                 variant="outline" 
                 className="w-full border-primary text-primary hover:bg-primary hover:text-white"
-                onClick={() => navigate('/photographer/f47ac10b-58cc-4372-a567-0e02b2c3d479')}
+                onClick={() => navigate(`/photographer/${user?.id}`)}
               >
                 <Image className="w-4 h-4 mr-2" />
                 My Portfolio
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full border-primary text-primary hover:bg-primary hover:text-white"
+                onClick={() => navigate(`/photographer/${user?.id}/manage`)}
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Manage Portfolio
               </Button>
             )}
             {isAuthenticated ? (
