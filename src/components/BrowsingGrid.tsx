@@ -10,7 +10,7 @@ interface Photo {
   id: number;
   imageUrl: string;
   likes: number;
-  comments: number;
+  comments: Comment[];
   author: string;
   description: string;
   category: string;
@@ -21,6 +21,7 @@ interface Comment {
   id: number;
   text: string;
   author: string;
+  timestamp: string;
 }
 
 const photos = [
@@ -28,7 +29,7 @@ const photos = [
     id: 1,
     imageUrl: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7",
     likes: 234,
-    comments: 12,
+    comments: [],
     author: "Sarah Smith",
     description: "Perfect morning light in my workspace",
     category: "Lifestyle",
@@ -38,7 +39,7 @@ const photos = [
     id: 2,
     imageUrl: "https://images.unsplash.com/photo-1519389950473-47ba0277781c",
     likes: 156,
-    comments: 8,
+    comments: [],
     author: "John Doe",
     description: "Team collaboration at its finest",
     category: "Corporate"
@@ -47,7 +48,7 @@ const photos = [
     id: 3,
     imageUrl: "https://images.unsplash.com/photo-1504893524553-b855bce32c67",
     likes: 489,
-    comments: 23,
+    comments: [],
     author: "Mike Wilson",
     description: "When code meets creativity",
     category: "Tech"
@@ -56,7 +57,7 @@ const photos = [
     id: 4,
     imageUrl: "https://images.unsplash.com/photo-1582562124811-c09040d0a901",
     likes: 345,
-    comments: 15,
+    comments: [],
     author: "Emma Davis",
     description: "My favorite model taking a break",
     category: "Pets"
@@ -65,7 +66,7 @@ const photos = [
     id: 5,
     imageUrl: "https://images.unsplash.com/photo-1518770660439-4636190af475",
     likes: 567,
-    comments: 32,
+    comments: [],
     author: "Alex Johnson",
     description: "The beauty of technology",
     category: "Abstract"
@@ -74,7 +75,7 @@ const photos = [
     id: 6,
     imageUrl: "https://images.unsplash.com/photo-1472396961693-142e6e269027",
     likes: 278,
-    comments: 19,
+    comments: [],
     author: "Lisa Brown",
     description: "Nature's finest moment",
     category: "Nature"
@@ -126,12 +127,19 @@ export const BrowsingGrid = () => {
       return;
     }
 
+    const newComment = {
+      id: Date.now(),
+      text: commentText,
+      author: "Anonymous User",
+      timestamp: new Date().toLocaleString()
+    };
+
     setPhotoData(prevPhotos =>
       prevPhotos.map(photo => {
         if (photo.id === photoId) {
           return {
             ...photo,
-            comments: photo.comments + 1
+            comments: [...photo.comments, newComment]
           };
         }
         return photo;
@@ -144,7 +152,6 @@ export const BrowsingGrid = () => {
     });
 
     setCommentText("");
-    setActiveCommentId(null);
   };
 
   return (
@@ -201,7 +208,7 @@ export const BrowsingGrid = () => {
                     className="flex items-center space-x-1 text-gray-600 hover:text-primary transition-colors"
                   >
                     <MessageCircle className="w-6 h-6" />
-                    <span>{photo.comments}</span>
+                    <span>{photo.comments.length}</span>
                   </button>
                 </div>
                 <button className="text-gray-600 hover:text-primary transition-colors">
@@ -212,6 +219,20 @@ export const BrowsingGrid = () => {
                 <span className="font-medium text-gray-900">{photo.author}</span>{" "}
                 {photo.description}
               </p>
+              
+              {/* Comments Section */}
+              <div className="space-y-2">
+                {photo.comments.map((comment) => (
+                  <div key={comment.id} className="bg-gray-50 p-3 rounded-lg">
+                    <div className="flex justify-between items-start">
+                      <span className="font-medium text-sm">{comment.author}</span>
+                      <span className="text-xs text-gray-500">{comment.timestamp}</span>
+                    </div>
+                    <p className="text-sm mt-1">{comment.text}</p>
+                  </div>
+                ))}
+              </div>
+              
               {activeCommentId === photo.id && (
                 <div className="flex gap-2 mt-2">
                   <Input

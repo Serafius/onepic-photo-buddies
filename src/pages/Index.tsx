@@ -1,5 +1,4 @@
 import { Header } from "@/components/Header";
-import { Hero } from "@/components/Hero";
 import { CategorySection } from "@/components/CategorySection";
 import { FeaturedPhotographers } from "@/components/FeaturedPhotographers";
 import { BrowsingGrid } from "@/components/BrowsingGrid";
@@ -7,7 +6,6 @@ import { PhotographersDrawer } from "@/components/PhotographersDrawer";
 import { ClientBookingRequests } from "@/components/ClientBookingRequests";
 import { PhotographerDashboard } from "@/components/PhotographerDashboard";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -66,8 +64,7 @@ const Index = () => {
             <div className="lg:col-span-8">
               <BrowsingGrid />
             </div>
-            <div className="lg:col-span-4 space-y-8">
-              <CategorySection />
+            <div className="lg:col-span-4 space-y-8 sticky top-24 h-fit">
               <FeaturedPhotographers />
             </div>
           </div>
