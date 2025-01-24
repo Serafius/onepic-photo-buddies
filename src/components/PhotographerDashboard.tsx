@@ -15,6 +15,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "lucide-react";
+import { PortfolioManagement } from "./PortfolioManagement";
 
 interface BookingRequest {
   id: string;
@@ -254,38 +255,8 @@ export const PhotographerDashboard = ({ photographerId }: Props) => {
         </CardContent>
       </Card>
 
-      {/* Portfolio Upload Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Add to Portfolio</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Image Title</label>
-            <Input
-              value={imageTitle}
-              onChange={(e) => setImageTitle(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Description</label>
-            <Textarea
-              value={imageDescription}
-              onChange={(e) => setImageDescription(e.target.value)}
-              rows={3}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Image</label>
-            <Input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-            />
-          </div>
-          <Button onClick={handleImageUpload}>Upload Image</Button>
-        </CardContent>
-      </Card>
+      {/* Portfolio Management Section */}
+      <PortfolioManagement photographerId={photographerId} />
 
       {/* Booking Requests Section */}
       <Card>
