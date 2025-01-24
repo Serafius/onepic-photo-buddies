@@ -36,7 +36,7 @@ export const CategorySection = () => {
   const navigate = useNavigate();
 
   const handleCategoryClick = (category: string) => {
-    navigate(`/category/${category}`); // Remove toLowerCase() since categories are already lowercase
+    navigate(`/category/${category}`);
   };
 
   return (

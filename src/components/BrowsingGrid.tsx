@@ -29,6 +29,7 @@ export const BrowsingGrid = () => {
 
   useEffect(() => {
     fetchPhotos();
+    console.log("Current category:", category); // Debug log
   }, [category]);
 
   const fetchPhotos = async () => {
@@ -50,15 +51,18 @@ export const BrowsingGrid = () => {
 
       // If we're on a category page, filter by that category
       if (category) {
-        query = query.ilike('category_name', category);
+        query = query.ilike('category_name', `%${category}%`);
       }
 
       const { data, error } = await query.limit(20);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error); // Debug log
+        throw error;
+      }
 
       if (data) {
-        // Randomize the order of images
+        console.log('Fetched data:', data); // Debug log
         const shuffledData = [...data].sort(() => Math.random() - 0.5);
         setPhotoData(shuffledData);
       }
