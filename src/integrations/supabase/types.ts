@@ -133,6 +133,7 @@ export type Database = {
       }
       portfolio_images: {
         Row: {
+          category_name: string | null
           created_at: string
           description: string | null
           id: string
@@ -141,6 +142,7 @@ export type Database = {
           title: string | null
         }
         Insert: {
+          category_name?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -149,6 +151,7 @@ export type Database = {
           title?: string | null
         }
         Update: {
+          category_name?: string | null
           created_at?: string
           description?: string | null
           id?: string

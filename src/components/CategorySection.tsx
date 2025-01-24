@@ -1,14 +1,13 @@
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 
 const categories = [
   { 
     id: 1, 
-    name: "Weddings", 
+    name: "Wedding", 
     image: "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07",
     description: "Capture your special day",
-    path: "/category/weddings"
+    path: "/category/wedding"
   },
   { 
     id: 2, 
@@ -30,40 +29,27 @@ const categories = [
     image: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7",
     description: "Restaurant & culinary photography",
     path: "/category/food"
-  },
-  { 
-    id: 5, 
-    name: "Nature", 
-    image: "https://images.unsplash.com/photo-1469474968028-56623f02e42e",
-    description: "Landscape and wildlife photography",
-    path: "/category/nature"
-  },
-  { 
-    id: 6, 
-    name: "Wildlife", 
-    image: "https://images.unsplash.com/photo-1518877593221-1f28583780b4",
-    description: "Capture amazing wildlife moments",
-    path: "/category/wildlife"
   }
 ];
 
 export const CategorySection = () => {
   const navigate = useNavigate();
 
+  const handleCategoryClick = (category: string) => {
+    navigate(`/category/${category.toLowerCase()}`);
+  };
+
   return (
     <section className="bg-white rounded-lg shadow-sm p-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold text-primary">Discover Categories</h2>
-        <button className="text-primary hover:text-primary/80 transition-colors text-sm">
-          View All
-        </button>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {categories.map((category) => (
           <Card
             key={category.id}
             className="hover-scale glass-card cursor-pointer"
-            onClick={() => navigate(category.path)}
+            onClick={() => handleCategoryClick(category.name)}
           >
             <div className="aspect-[4/3] relative overflow-hidden rounded-t-lg">
               <img
