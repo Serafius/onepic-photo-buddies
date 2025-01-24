@@ -1,6 +1,5 @@
 import { Card } from "@/components/ui/card";
 import { Heart, MessageCircle, Share2, Send } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +18,6 @@ interface Photo {
 }
 
 export const BrowsingGrid = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const [likedPhotos, setLikedPhotos] = useState<string[]>([]);
   const [photoData, setPhotoData] = useState<Photo[]>([]);
@@ -46,12 +44,15 @@ export const BrowsingGrid = () => {
             name
           )
         `)
+        .order('created_at', { ascending: false })
         .limit(20);
 
       if (error) throw error;
 
       if (data) {
-        setPhotoData(data);
+        // Randomize the order of images
+        const shuffledData = [...data].sort(() => Math.random() - 0.5);
+        setPhotoData(shuffledData);
       }
     } catch (error) {
       console.error('Error fetching photos:', error);
