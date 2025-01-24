@@ -52,6 +52,7 @@ export const Header = () => {
   const [isPhotographer, setIsPhotographer] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [userId, setUserId] = useState("f47ac10b-58cc-4372-a567-0e02b2c3d479"); // Temporary user ID for testing
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -201,7 +202,7 @@ export const Header = () => {
                     <Button 
                       variant="outline" 
                       className="hover-scale border-primary text-primary hover:bg-primary hover:text-white"
-                      onClick={() => navigate(`/photographer/${user?.id}`)}
+                      onClick={() => navigate(`/photographer/${userId}`)}
                     >
                       <Image className="w-4 h-4 mr-2" />
                       My Portfolio
@@ -209,7 +210,7 @@ export const Header = () => {
                     <Button 
                       variant="outline" 
                       className="hover-scale border-primary text-primary hover:bg-primary hover:text-white"
-                      onClick={() => navigate(`/photographer/${user?.id}/manage`)}
+                      onClick={() => navigate(`/photographer/${userId}/manage`)}
                     >
                       <Settings className="w-4 h-4 mr-2" />
                       Manage Portfolio
@@ -297,22 +298,24 @@ export const Header = () => {
               Photographers
             </a>
             {isAuthenticated && isPhotographer && (
-              <Button 
-                variant="outline" 
-                className="w-full border-primary text-primary hover:bg-primary hover:text-white"
-                onClick={() => navigate(`/photographer/${user?.id}`)}
-              >
-                <Image className="w-4 h-4 mr-2" />
-                My Portfolio
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full border-primary text-primary hover:bg-primary hover:text-white"
-                onClick={() => navigate(`/photographer/${user?.id}/manage`)}
-              >
-                <Settings className="w-4 h-4 mr-2" />
-                Manage Portfolio
-              </Button>
+              <div className="space-y-2">
+                <Button 
+                  variant="outline" 
+                  className="w-full border-primary text-primary hover:bg-primary hover:text-white"
+                  onClick={() => navigate(`/photographer/${userId}`)}
+                >
+                  <Image className="w-4 h-4 mr-2" />
+                  My Portfolio
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full border-primary text-primary hover:bg-primary hover:text-white"
+                  onClick={() => navigate(`/photographer/${userId}/manage`)}
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Manage Portfolio
+                </Button>
+              </div>
             )}
             {isAuthenticated ? (
               <div className="space-y-2 pt-2">
