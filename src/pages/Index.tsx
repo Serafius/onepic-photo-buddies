@@ -14,49 +14,31 @@ const Index = () => {
   const [userRole, setUserRole] = useState<'client' | 'photographer' | null>(null);
   const [photographerId, setPhotographerId] = useState<string | null>(null);
 
+  // Use the temporary auth state from Header component
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setIsAuthenticated(!!session);
-      
-      if (session?.user) {
-        // For testing purposes, hardcode roles based on email
-        if (session.user.email === 'photo@example.com') {
-          setUserRole('photographer');
-          // Fetch photographer ID
-          const { data } = await supabase
-            .from('photographers')
-            .select('id')
-            .eq('user_id', session.user.id)
-            .single();
-          if (data) {
-            setPhotographerId(data.id);
-          }
-        } else if (session.user.email === 'client@example.com') {
-          setUserRole('client');
+    const checkAuth = () => {
+      const tempAuthState = localStorage.getItem('tempAuthState');
+      if (tempAuthState) {
+        const { isAuthenticated, role } = JSON.parse(tempAuthState);
+        setIsAuthenticated(isAuthenticated);
+        setUserRole(role);
+        
+        // For testing, set a mock photographer ID when in photographer mode
+        if (role === 'photographer') {
+          setPhotographerId('mock-photographer-id');
         }
-      } else {
-        setUserRole(null);
-        setPhotographerId(null);
       }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  // For testing purposes
-  useEffect(() => {
-    // Simulate login for testing
-    const email = 'photo@example.com'; // or 'client@example.com'
-    const password = 'testpassword123';
-    
-    const loginUser = async () => {
-      await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
     };
 
-    loginUser();
+    // Check initial auth state
+    checkAuth();
+
+    // Listen for auth state changes
+    window.addEventListener('tempAuthStateChange', checkAuth);
+
+    return () => {
+      window.removeEventListener('tempAuthStateChange', checkAuth);
+    };
   }, []);
 
   if (userRole === 'photographer' && photographerId) {
