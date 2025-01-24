@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,44 @@ export const PhotographerDashboard = ({ photographerId }: { photographerId: stri
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [bookingRequests, setBookingRequests] = useState<BookingRequest[]>([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchPhotographerData = async () => {
+      const { data, error } = await supabase
+        .from("photographers")
+        .select("*")
+        .eq("id", photographerId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching photographer data:", error);
+        return;
+      }
+
+      if (data) {
+        setHourlyRate(data.hourly_rate.toString());
+        setLocation(data.location || "");
+        setBio(data.bio || "");
+      }
+    };
+
+    const fetchBookingRequests = async () => {
+      const { data, error } = await supabase
+        .from("booking_requests")
+        .select("*")
+        .eq("photographer_id", photographerId);
+
+      if (error) {
+        console.error("Error fetching booking requests:", error);
+        return;
+      }
+
+      setBookingRequests(data || []);
+    };
+
+    fetchPhotographerData();
+    fetchBookingRequests();
+  }, [photographerId]);
 
   const updateProfile = async () => {
     try {
