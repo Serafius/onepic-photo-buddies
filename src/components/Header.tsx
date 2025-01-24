@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Search, Grid3X3, LogIn, Camera, LogOut, Image, Settings } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
@@ -52,7 +52,7 @@ export const Header = () => {
   const [isPhotographer, setIsPhotographer] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [userId, setUserId] = useState("f47ac10b-58cc-4372-a567-0e02b2c3d479"); // Temporary user ID for testing
+  const [userId, setUserId] = useState("f47ac10b-58cc-4372-a567-0e02b2c3d479");
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -96,7 +96,7 @@ export const Header = () => {
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
       <nav className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2" onClick={() => navigate("/")} style={{ cursor: 'pointer' }}>
             <img 
               src="/lovable-uploads/e819116f-5c94-4a36-859f-0b22291310b0.png" 
               alt="OnePic Logo" 
@@ -117,22 +117,22 @@ export const Header = () => {
                   <NavigationMenuContent>
                     <div className="grid gap-3 p-6 w-[400px]">
                       <div className="grid grid-cols-2 gap-4">
-                        <a href="#" className="block group">
+                        <Link to="/trending" className="block group">
                           <div className="font-medium mb-1 group-hover:text-primary transition-colors">
                             Trending Photographers
                           </div>
                           <p className="text-sm text-gray-500">
                             Discover top-rated professionals
                           </p>
-                        </a>
-                        <a href="#" className="block group">
+                        </Link>
+                        <Link to="/new" className="block group">
                           <div className="font-medium mb-1 group-hover:text-primary transition-colors">
                             New Arrivals
                           </div>
                           <p className="text-sm text-gray-500">
                             Recently joined photographers
                           </p>
-                        </a>
+                        </Link>
                       </div>
                     </div>
                   </NavigationMenuContent>
@@ -147,14 +147,18 @@ export const Header = () => {
                     <div className="grid gap-3 p-6 w-[400px] md:w-[500px]">
                       <div className="grid grid-cols-2 gap-4">
                         {categories.map((category) => (
-                          <a key={category.id} href="#" className="block group">
+                          <Link 
+                            key={category.id} 
+                            to={`/category/${category.name.toLowerCase()}`} 
+                            className="block group"
+                          >
                             <div className="font-medium mb-1 group-hover:text-primary transition-colors">
                               {category.name}
                             </div>
                             <p className="text-sm text-gray-500">
                               {category.description}
                             </p>
-                          </a>
+                          </Link>
                         ))}
                       </div>
                     </div>
@@ -169,22 +173,22 @@ export const Header = () => {
                   <NavigationMenuContent>
                     <div className="grid gap-3 p-6 w-[400px]">
                       <div className="grid grid-cols-2 gap-4">
-                        <a href="#" className="block group">
+                        <Link to="/featured" className="block group">
                           <div className="font-medium mb-1 group-hover:text-primary transition-colors">
                             Featured Photographers
                           </div>
                           <p className="text-sm text-gray-500">
                             Discover our top photographers
                           </p>
-                        </a>
-                        <a href="#" className="block group">
+                        </Link>
+                        <Link to="/photographers" className="block group">
                           <div className="font-medium mb-1 group-hover:text-primary transition-colors">
                             Browse All
                           </div>
                           <p className="text-sm text-gray-500">
                             Explore our entire photographer community
                           </p>
-                        </a>
+                        </Link>
                       </div>
                     </div>
                   </NavigationMenuContent>
@@ -285,18 +289,18 @@ export const Header = () => {
         {/* Mobile Navigation */}
         {isMenuOpen && (
           <div className="md:hidden py-4 space-y-4 animate-fade-down">
-            <a href="#" className="flex items-center text-gray-600 hover:text-primary transition-colors py-2">
+            <Link to="/discover" className="flex items-center text-gray-600 hover:text-primary transition-colors py-2">
               <Search className="w-4 h-4 mr-2" />
               Discover
-            </a>
-            <a href="#" className="flex items-center text-gray-600 hover:text-primary transition-colors py-2">
+            </Link>
+            <Link to="/categories" className="flex items-center text-gray-600 hover:text-primary transition-colors py-2">
               <Grid3X3 className="w-4 h-4 mr-2" />
               Categories
-            </a>
-            <a href="#" className="flex items-center text-gray-600 hover:text-primary transition-colors py-2">
+            </Link>
+            <Link to="/photographers" className="flex items-center text-gray-600 hover:text-primary transition-colors py-2">
               <Camera className="w-4 h-4 mr-2" />
               Photographers
-            </a>
+            </Link>
             {isAuthenticated && isPhotographer && (
               <div className="space-y-2">
                 <Button 
