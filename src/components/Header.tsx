@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Search, Grid3X3, LogIn, Camera, LogOut } from "lucide-react";
+import { Menu, X, Search, Grid3X3, LogIn, Camera, LogOut, Image } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -196,6 +196,16 @@ export const Header = () => {
                 <span className="text-sm text-gray-600">
                   Logged in as: {isPhotographer ? "Photographer" : "Client"}
                 </span>
+                {isPhotographer && (
+                  <Button 
+                    variant="outline" 
+                    className="hover-scale border-primary text-primary hover:bg-primary hover:text-white"
+                    onClick={() => navigate('/photographer/f47ac10b-58cc-4372-a567-0e02b2c3d479')}
+                  >
+                    <Image className="w-4 h-4 mr-2" />
+                    My Portfolio
+                  </Button>
+                )}
                 <Button 
                   variant="outline" 
                   className="hover-scale border-primary text-primary hover:bg-primary hover:text-white"
@@ -276,6 +286,16 @@ export const Header = () => {
               <Camera className="w-4 h-4 mr-2" />
               Photographers
             </a>
+            {isAuthenticated && isPhotographer && (
+              <Button 
+                variant="outline" 
+                className="w-full border-primary text-primary hover:bg-primary hover:text-white"
+                onClick={() => navigate('/photographer/f47ac10b-58cc-4372-a567-0e02b2c3d479')}
+              >
+                <Image className="w-4 h-4 mr-2" />
+                My Portfolio
+              </Button>
+            )}
             {isAuthenticated ? (
               <div className="space-y-2 pt-2">
                 <div className="text-sm text-gray-600 py-2">
