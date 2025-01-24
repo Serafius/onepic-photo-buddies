@@ -5,6 +5,14 @@ import { useNavigate } from "react-router-dom";
 
 const photographers = [
   {
+    id: "moutasem-id", // We'll use a temporary ID for now
+    name: "Moutasem Bellah",
+    specialty: "Event Photography",
+    rating: 5.0,
+    image: "/lovable-uploads/71da2de9-90e4-4e69-a867-55b6102a0bdd.png",
+    location: "Luxembourg, Alzette",
+  },
+  {
     id: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
     name: "Sarah Johnson",
     specialty: "Wedding Photography",
@@ -34,13 +42,13 @@ export const FeaturedPhotographers = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="bg-white/80 backdrop-blur-sm rounded-lg shadow-sm p-6">
+    <section className="bg-white/80 backdrop-blur-sm rounded-lg shadow-sm p-6 sticky top-24">
       <h2 className="text-xl font-semibold mb-4 text-primary">Featured Photographers</h2>
-      <div className="space-y-4">
+      <div className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto pr-2">
         {photographers.map((photographer) => (
           <Card 
             key={photographer.id} 
-            className="overflow-hidden hover-scale glass-card cursor-pointer border-0 shadow-md"
+            className="overflow-hidden hover:scale-102 transition-all duration-300 glass-card cursor-pointer border-0 shadow-md hover:shadow-lg"
             onClick={() => navigate(`/photographer/${photographer.id}`)}
           >
             <div className="p-4 flex items-center space-x-4">
