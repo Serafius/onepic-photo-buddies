@@ -72,10 +72,13 @@ export const PhotographerDashboard = ({ photographerId }: Props) => {
 
   const fetchBookingRequests = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: bookings, error } = await supabase
         .from('booking_requests')
         .select(`
-          *,
+          id,
+          created_at,
+          status,
+          message,
           profiles:client_id (
             username
           )
@@ -84,13 +87,13 @@ export const PhotographerDashboard = ({ photographerId }: Props) => {
 
       if (error) throw error;
 
-      if (data) {
-        const formattedRequests = data.map(request => ({
-          id: request.id,
-          client_name: request.profiles?.username || 'Anonymous',
-          date: new Date(request.created_at).toLocaleDateString(),
-          status: request.status as 'pending' | 'accepted' | 'rejected',
-          message: request.message || ''
+      if (bookings) {
+        const formattedRequests = bookings.map(booking => ({
+          id: booking.id,
+          client_name: booking.profiles?.username || 'Anonymous',
+          date: new Date(booking.created_at).toLocaleDateString(),
+          status: booking.status as 'pending' | 'accepted' | 'rejected',
+          message: booking.message || ''
         }));
         setBookingRequests(formattedRequests);
       }
