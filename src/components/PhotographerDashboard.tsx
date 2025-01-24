@@ -12,7 +12,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
+import { User } from "lucide-react";
 
 interface BookingRequest {
   id: string;
@@ -33,24 +35,100 @@ export const PhotographerDashboard = ({ photographerId }: Props) => {
   const [imageTitle, setImageTitle] = useState("");
   const [imageDescription, setImageDescription] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [bookingRequests, setBookingRequests] = useState<BookingRequest[]>([
-    {
-      id: '1',
-      client_name: 'John Doe',
-      date: '2024-02-01',
-      status: 'pending',
-      message: 'Wedding photography request'
-    },
-    // Add more mock booking requests as needed
-  ]);
+  const [photographerName, setPhotographerName] = useState("Sarah SMITH");
+  const [bookingRequests, setBookingRequests] = useState<BookingRequest[]>([]);
   const { toast } = useToast();
 
+  useEffect(() => {
+    fetchPhotographerData();
+    fetchBookingRequests();
+  }, [photographerId]);
+
+  const fetchPhotographerData = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('photographers')
+        .select('*')
+        .eq('id', photographerId)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setHourlyRate(data.hourly_rate.toString());
+        setLocation(data.location || '');
+        setBio(data.bio || '');
+        setPhotographerName(data.name);
+      }
+    } catch (error) {
+      console.error('Error fetching photographer data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load photographer data",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const fetchBookingRequests = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('booking_requests')
+        .select(`
+          *,
+          profiles:client_id (
+            username
+          )
+        `)
+        .eq('photographer_id', photographerId);
+
+      if (error) throw error;
+
+      if (data) {
+        const formattedRequests = data.map(request => ({
+          id: request.id,
+          client_name: request.profiles?.username || 'Anonymous',
+          date: new Date(request.created_at).toLocaleDateString(),
+          status: request.status as 'pending' | 'accepted' | 'rejected',
+          message: request.message || ''
+        }));
+        setBookingRequests(formattedRequests);
+      }
+    } catch (error) {
+      console.error('Error fetching booking requests:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load booking requests",
+        variant: "destructive",
+      });
+    }
+  };
+
   const updateProfile = async () => {
-    // For now, just show a success toast
-    toast({
-      title: "Profile Updated",
-      description: "Your profile has been successfully updated.",
-    });
+    try {
+      const { error } = await supabase
+        .from('photographers')
+        .update({
+          hourly_rate: parseFloat(hourlyRate),
+          location,
+          bio
+        })
+        .eq('id', photographerId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been successfully updated.",
+      });
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update profile",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleImageUpload = async () => {
@@ -63,36 +141,92 @@ export const PhotographerDashboard = ({ photographerId }: Props) => {
       return;
     }
 
-    // For now, just show a success toast
-    toast({
-      title: "Image Uploaded",
-      description: "Your image has been successfully uploaded.",
-    });
+    try {
+      const fileExt = imageFile.name.split('.').pop();
+      const filePath = `${photographerId}/${crypto.randomUUID()}.${fileExt}`;
 
-    // Clear form
-    setImageTitle("");
-    setImageDescription("");
-    setImageFile(null);
+      const { error: uploadError } = await supabase.storage
+        .from('portfolio')
+        .upload(filePath, imageFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('portfolio')
+        .getPublicUrl(filePath);
+
+      const { error: dbError } = await supabase
+        .from('portfolio_images')
+        .insert({
+          photographer_id: photographerId,
+          image_url: publicUrl,
+          title: imageTitle,
+          description: imageDescription
+        });
+
+      if (dbError) throw dbError;
+
+      toast({
+        title: "Success",
+        description: "Image uploaded successfully",
+      });
+
+      setImageTitle("");
+      setImageDescription("");
+      setImageFile(null);
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload image",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleBookingResponse = (requestId: string, accept: boolean) => {
-    setBookingRequests(prev => 
-      prev.map(request => 
-        request.id === requestId 
-          ? { ...request, status: accept ? 'accepted' : 'rejected' }
-          : request
-      )
-    );
+  const handleBookingResponse = async (requestId: string, accept: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('booking_requests')
+        .update({ status: accept ? 'accepted' : 'rejected' })
+        .eq('id', requestId);
 
-    toast({
-      title: accept ? "Booking Accepted" : "Booking Rejected",
-      description: `You have ${accept ? 'accepted' : 'rejected'} the booking request.`,
-    });
+      if (error) throw error;
+
+      toast({
+        title: accept ? "Booking Accepted" : "Booking Rejected",
+        description: `You have ${accept ? 'accepted' : 'rejected'} the booking request.`,
+      });
+
+      // Refresh booking requests
+      fetchBookingRequests();
+    } catch (error) {
+      console.error('Error updating booking request:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update booking request",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
-      {/* Profile Section */}
+      {/* Profile Header */}
+      <div className="flex items-center gap-4 mb-8">
+        <Avatar className="h-16 w-16">
+          <AvatarImage src="" />
+          <AvatarFallback>
+            <User className="h-8 w-8" />
+          </AvatarFallback>
+        </Avatar>
+        <div>
+          <h1 className="text-2xl font-bold">{photographerName}</h1>
+          <p className="text-gray-600">{location}</p>
+        </div>
+      </div>
+
+      {/* Profile Settings */}
       <Card>
         <CardHeader>
           <CardTitle>Profile Settings</CardTitle>
