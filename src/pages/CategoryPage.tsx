@@ -1,52 +1,91 @@
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
 
-const categoryImages = {
-  weddings: [
-    {
-      id: 1,
-      url: "https://images.unsplash.com/photo-1519741497674-611481863552",
-      title: "Beach Wedding",
-      photographer: "Emma White"
-    },
-    {
-      id: 2,
-      url: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc",
-      title: "Garden Ceremony",
-      photographer: "John Davis"
-    },
-    {
-      id: 3,
-      url: "https://images.unsplash.com/photo-1519225421980-715cb0215aed",
-      title: "Church Wedding",
-      photographer: "Michael Brown"
-    }
-  ],
-  portraits: [
-    {
-      id: 1,
-      url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330",
-      title: "Professional Headshot",
-      photographer: "Lisa Chen"
-    },
-    {
-      id: 2,
-      url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
-      title: "Corporate Portrait",
-      photographer: "David Kim"
-    },
-    {
-      id: 3,
-      url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb",
-      title: "Fashion Portrait",
-      photographer: "Sophie Martin"
-    }
-  ]
-};
+interface PortfolioImage {
+  id: string;
+  image_url: string;
+  title: string | null;
+  description: string | null;
+  photographer: {
+    name: string;
+  } | null;
+}
+
+const ITEMS_PER_PAGE = 9;
 
 export const CategoryPage = () => {
   const { category } = useParams();
-  const images = categoryImages[category as keyof typeof categoryImages] || [];
+  const [images, setImages] = useState<PortfolioImage[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
+  const loader = useRef(null);
+
+  const loadImages = useCallback(async () => {
+    if (isLoading || !hasMore) return;
+
+    setIsLoading(true);
+    try {
+      const from = page * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
+
+      // Query portfolio images and join with photographers table
+      const { data, error } = await supabase
+        .from('portfolio_images')
+        .select(`
+          id,
+          image_url,
+          title,
+          description,
+          photographer:photographers (
+            name
+          )
+        `)
+        .range(from, to);
+
+      if (error) throw error;
+
+      if (data) {
+        if (data.length < ITEMS_PER_PAGE) {
+          setHasMore(false);
+        }
+        setImages(prev => [...prev, ...data]);
+        setPage(prev => prev + 1);
+      }
+    } catch (error) {
+      console.error('Error loading images:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [page, isLoading, hasMore]);
+
+  useEffect(() => {
+    // Reset state when category changes
+    setImages([]);
+    setPage(0);
+    setHasMore(true);
+    loadImages();
+  }, [category]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && !isLoading) {
+          loadImages();
+        }
+      },
+      { threshold: 1.0 }
+    );
+
+    if (loader.current) {
+      observer.observe(loader.current);
+    }
+
+    return () => observer.disconnect();
+  }, [loadImages, isLoading]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -56,18 +95,44 @@ export const CategoryPage = () => {
           <Card key={image.id} className="overflow-hidden group">
             <div className="aspect-square relative">
               <img
-                src={image.url}
-                alt={image.title}
+                src={image.image_url}
+                alt={image.title || "Photography"}
                 className="w-full h-full object-cover"
               />
               <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                <h3 className="font-semibold">{image.title}</h3>
-                <p className="text-sm">by {image.photographer}</p>
+                {image.title && <h3 className="font-semibold">{image.title}</h3>}
+                {image.photographer?.name && (
+                  <p className="text-sm">by {image.photographer.name}</p>
+                )}
+                {image.description && (
+                  <p className="text-sm mt-2">{image.description}</p>
+                )}
               </div>
             </div>
           </Card>
         ))}
       </div>
+      
+      {/* Loading indicator */}
+      <div ref={loader} className="flex justify-center mt-8">
+        {isLoading && (
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        )}
+      </div>
+      
+      {/* No more images message */}
+      {!hasMore && images.length > 0 && (
+        <p className="text-center text-gray-500 mt-8">
+          No more images to load
+        </p>
+      )}
+      
+      {/* Empty state */}
+      {!isLoading && images.length === 0 && (
+        <p className="text-center text-gray-500 mt-8">
+          No images found for this category
+        </p>
+      )}
     </div>
   );
 };
