@@ -65,12 +65,27 @@ export const BrowsingGrid = () => {
 
       if (data) {
         console.log('Fetched data:', data);
-        // Sort the data according to the category sequence
-        const sortedData = data.sort((a, b) => {
-          const indexA = categoryOrder.indexOf(a.category_name.toLowerCase());
-          const indexB = categoryOrder.indexOf(b.category_name.toLowerCase());
-          return indexA - indexB;
+        
+        // Group photos by category
+        const photosByCategory: { [key: string]: Photo[] } = {};
+        categoryOrder.forEach(cat => {
+          photosByCategory[cat] = data.filter(
+            photo => photo.category_name.toLowerCase() === cat
+          );
         });
+
+        // Interleave photos from different categories
+        const sortedData: Photo[] = [];
+        let maxLength = Math.max(...Object.values(photosByCategory).map(arr => arr.length));
+        
+        for (let i = 0; i < maxLength; i++) {
+          for (const cat of categoryOrder) {
+            if (photosByCategory[cat][i]) {
+              sortedData.push(photosByCategory[cat][i]);
+            }
+          }
+        }
+
         setPhotoData(sortedData);
       }
     } catch (error) {
