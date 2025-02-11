@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { Heart, MessageCircle, Share2, Send } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -18,6 +19,8 @@ interface Photo {
   category_name: string;
 }
 
+const categoryOrder = ["events", "portraits", "food", "weddings"];
+
 export const BrowsingGrid = () => {
   const { category } = useParams();
   const { toast } = useToast();
@@ -29,7 +32,7 @@ export const BrowsingGrid = () => {
 
   useEffect(() => {
     fetchPhotos();
-    console.log("Current category:", category); // Debug log
+    console.log("Current category:", category);
   }, [category]);
 
   const fetchPhotos = async () => {
@@ -49,22 +52,26 @@ export const BrowsingGrid = () => {
         `)
         .order('created_at', { ascending: false });
 
-      // If we're on a category page, filter by that category
       if (category) {
         query = query.ilike('category_name', `%${category}%`);
       }
 
-      const { data, error } = await query.limit(20);
+      const { data, error } = await query;
 
       if (error) {
-        console.error('Supabase error:', error); // Debug log
+        console.error('Supabase error:', error);
         throw error;
       }
 
       if (data) {
-        console.log('Fetched data:', data); // Debug log
-        const shuffledData = [...data].sort(() => Math.random() - 0.5);
-        setPhotoData(shuffledData);
+        console.log('Fetched data:', data);
+        // Sort the data according to the category sequence
+        const sortedData = data.sort((a, b) => {
+          const indexA = categoryOrder.indexOf(a.category_name.toLowerCase());
+          const indexB = categoryOrder.indexOf(b.category_name.toLowerCase());
+          return indexA - indexB;
+        });
+        setPhotoData(sortedData);
       }
     } catch (error) {
       console.error('Error fetching photos:', error);
