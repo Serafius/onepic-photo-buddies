@@ -1,13 +1,14 @@
+
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 
 const categories = [
   { 
     id: 1, 
-    name: "wedding", 
+    name: "weddings", 
     image: "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07",
     description: "Capture your special day",
-    path: "/category/wedding"
+    path: "/category/weddings"
   },
   { 
     id: 2, 
