@@ -11,6 +11,9 @@ import { supabase } from "@/integrations/supabase/client";
 export const SignUp = () => {
   const [userType, setUserType] = useState<"photographer" | "client" | "">("");
   const [formData, setFormData] = useState({
+    username: "",
+    name: "",
+    email: "",
     country: "",
     city: "",
     location: "",
@@ -40,7 +43,7 @@ export const SignUp = () => {
       return;
     }
 
-    if (!formData.country || !formData.city || !formData.location || !formData.password) {
+    if (!formData.username || !formData.name || !formData.email || !formData.country || !formData.city || !formData.location || !formData.password) {
       toast({
         title: "Please fill all required fields",
         description: "All fields are required to create your account.",
@@ -65,6 +68,9 @@ export const SignUp = () => {
         const { error } = await supabase
           .from("Photographers")
           .insert([{
+            username: formData.username,
+            name: formData.name,
+            email: formData.email,
             country: formData.country,
             city: formData.city,
             location: formData.location,
@@ -82,6 +88,9 @@ export const SignUp = () => {
         const { error } = await supabase
           .from("Clients")
           .insert([{
+            username: formData.username,
+            name: formData.name,
+            email: formData.email,
             country: formData.country,
             city: formData.city,
             location: formData.location,
@@ -146,6 +155,42 @@ export const SignUp = () => {
           {userType && (
             <>
               <div className="space-y-4">
+                <div>
+                  <Label htmlFor="username" className="text-sm font-medium text-gray-700">Username</Label>
+                  <Input
+                    id="username"
+                    type="text"
+                    placeholder="Enter your username"
+                    value={formData.username}
+                    onChange={(e) => handleInputChange("username", e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="name" className="text-sm font-medium text-gray-700">Full Name</Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="Enter your full name"
+                    value={formData.name}
+                    onChange={(e) => handleInputChange("name", e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="email" className="text-sm font-medium text-gray-700">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange("email", e.target.value)}
+                    required
+                  />
+                </div>
+
                 <div>
                   <Label htmlFor="country" className="text-sm font-medium text-gray-700">Country</Label>
                   <Input

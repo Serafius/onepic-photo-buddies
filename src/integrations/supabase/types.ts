@@ -58,26 +58,35 @@ export type Database = {
         Row: {
           city: string
           country: string
+          email: string
           id: number
           location: string
           made_at: string
+          name: string
           password: string
+          username: string
         }
         Insert: {
           city: string
           country: string
+          email?: string
           id?: number
           location: string
           made_at?: string
+          name?: string
           password: string
+          username?: string
         }
         Update: {
           city?: string
           country?: string
+          email?: string
           id?: number
           location?: string
           made_at?: string
+          name?: string
           password?: string
+          username?: string
         }
         Relationships: []
       }
@@ -203,29 +212,38 @@ export type Database = {
         Row: {
           city: string
           country: string
+          email: string
           id: number
           location: string
           made_at: string
+          name: string
           password: string
           profession: string
+          username: string
         }
         Insert: {
           city: string
           country: string
+          email?: string
           id?: number
           location: string
           made_at?: string
+          name?: string
           password: string
           profession: string
+          username?: string
         }
         Update: {
           city?: string
           country?: string
+          email?: string
           id?: number
           location?: string
           made_at?: string
+          name?: string
           password?: string
           profession?: string
+          username?: string
         }
         Relationships: []
       }
