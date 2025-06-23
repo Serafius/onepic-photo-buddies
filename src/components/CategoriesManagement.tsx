@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,7 @@ import { Plus, Edit, Trash2, DollarSign } from "lucide-react";
 interface Category {
   id: string;
   name: string;
-  price_per_hour: number;
+  price: number;
   description: string;
 }
 
@@ -23,7 +24,7 @@ export const CategoriesManagement = ({ photographerId }: CategoriesManagementPro
   const [categories, setCategories] = useState<Category[]>([]);
   const [newCategory, setNewCategory] = useState({
     name: "",
-    price_per_hour: "",
+    price: "",
     description: ""
   });
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -54,7 +55,7 @@ export const CategoriesManagement = ({ photographerId }: CategoriesManagementPro
   };
 
   const addCategory = async () => {
-    if (!newCategory.name || !newCategory.price_per_hour) {
+    if (!newCategory.name || !newCategory.price) {
       toast({
         title: "Error",
         description: "Please fill in name and price",
@@ -70,7 +71,7 @@ export const CategoriesManagement = ({ photographerId }: CategoriesManagementPro
         .insert({
           photographer_id: photographerId,
           name: newCategory.name,
-          price_per_hour: parseFloat(newCategory.price_per_hour),
+          price: parseFloat(newCategory.price),
           description: newCategory.description
         });
 
@@ -81,7 +82,7 @@ export const CategoriesManagement = ({ photographerId }: CategoriesManagementPro
         description: "Category added successfully",
       });
 
-      setNewCategory({ name: "", price_per_hour: "", description: "" });
+      setNewCategory({ name: "", price: "", description: "" });
       fetchCategories();
     } catch (error) {
       console.error("Error adding category:", error);
@@ -104,7 +105,7 @@ export const CategoriesManagement = ({ photographerId }: CategoriesManagementPro
         .from("photographer_categories")
         .update({
           name: editingCategory.name,
-          price_per_hour: editingCategory.price_per_hour,
+          price: editingCategory.price,
           description: editingCategory.description
         })
         .eq("id", editingCategory.id);
@@ -185,8 +186,8 @@ export const CategoriesManagement = ({ photographerId }: CategoriesManagementPro
                 <Input
                   type="number"
                   placeholder="150"
-                  value={newCategory.price_per_hour}
-                  onChange={(e) => setNewCategory({ ...newCategory, price_per_hour: e.target.value })}
+                  value={newCategory.price}
+                  onChange={(e) => setNewCategory({ ...newCategory, price: e.target.value })}
                 />
               </div>
             </div>
@@ -223,8 +224,8 @@ export const CategoriesManagement = ({ photographerId }: CategoriesManagementPro
                         <Label>Price per Hour ($)</Label>
                         <Input
                           type="number"
-                          value={editingCategory.price_per_hour}
-                          onChange={(e) => setEditingCategory({ ...editingCategory, price_per_hour: parseFloat(e.target.value) })}
+                          value={editingCategory.price}
+                          onChange={(e) => setEditingCategory({ ...editingCategory, price: parseFloat(e.target.value) })}
                         />
                       </div>
                     </div>
@@ -249,7 +250,7 @@ export const CategoriesManagement = ({ photographerId }: CategoriesManagementPro
                   <div className="flex items-center justify-between">
                     <div>
                       <h5 className="font-medium">{category.name}</h5>
-                      <p className="text-sm text-gray-600">${category.price_per_hour}/hour</p>
+                      <p className="text-sm text-gray-600">${category.price}/hour</p>
                       {category.description && (
                         <p className="text-sm text-gray-500 mt-1">{category.description}</p>
                       )}

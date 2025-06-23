@@ -49,7 +49,7 @@ export const ProfileManagement = ({ userId, isPhotographer, onClose }: ProfileMa
       const { data, error } = await supabase
         .from(tableName)
         .select("*")
-        .eq("id", userId)
+        .eq("id", parseInt(userId))
         .single();
 
       if (error) throw error;
@@ -123,7 +123,7 @@ export const ProfileManagement = ({ userId, isPhotographer, onClose }: ProfileMa
       const { error } = await supabase
         .from(tableName)
         .update(updateData)
-        .eq("id", userId);
+        .eq("id", parseInt(userId));
 
       if (error) throw error;
 
