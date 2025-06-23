@@ -58,10 +58,10 @@ export const ProfileManagement = ({ userId, isPhotographer, onClose }: ProfileMa
         setProfileData({
           name: data.name || "",
           email: data.email || "",
-          bio: data.bio || "",
-          profile_picture_url: data.profile_picture_url || "",
+          bio: (data as any).bio || "",
+          profile_picture_url: (data as any).profile_picture_url || "",
           location: data.location || "",
-          profession: data.profession || ""
+          profession: (data as any).profession || ""
         });
       }
     } catch (error) {
@@ -111,14 +111,18 @@ export const ProfileManagement = ({ userId, isPhotographer, onClose }: ProfileMa
       }
 
       const tableName = isPhotographer ? "Photographers" : "Clients";
-      const updateData = {
+      const updateData: any = {
         name: profileData.name,
         email: profileData.email,
-        bio: profileData.bio,
-        profile_picture_url: imageUrl,
         location: profileData.location,
-        ...(isPhotographer && { profession: profileData.profession })
       };
+
+      // Only add photographer-specific fields if user is a photographer
+      if (isPhotographer) {
+        updateData.bio = profileData.bio;
+        updateData.profile_picture_url = imageUrl;
+        updateData.profession = profileData.profession;
+      }
 
       const { error } = await supabase
         .from(tableName)
