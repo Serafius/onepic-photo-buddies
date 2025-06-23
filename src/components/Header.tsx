@@ -5,8 +5,6 @@ import { Menu, X, Search, Grid3X3, LogIn, Camera, LogOut, Image, Settings } from
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Auth } from "@supabase/auth-ui-react";
-import { ThemeSupa } from "@supabase/auth-ui-shared";
 import {
   Dialog,
   DialogContent,
@@ -51,41 +49,99 @@ export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isPhotographer, setIsPhotographer] = useState(false);
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [userId, setUserId] = useState("f47ac10b-58cc-4372-a567-0e02b2c3d479");
+  const [userId, setUserId] = useState<string>("");
+  const [isSignInOpen, setIsSignInOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Temporary login function for testing
-  const handleTestLogin = () => {
-    if (username === "photo" && password === "photo") {
-      setIsAuthenticated(true);
-      setIsPhotographer(true);
+  const handleSignIn = async () => {
+    if (!email || !password) {
       toast({
-        title: "Logged in as Photographer",
-        description: "Welcome to the photographer view!",
-      });
-    } else if (username === "client" && password === "client") {
-      setIsAuthenticated(true);
-      setIsPhotographer(false);
-      toast({
-        title: "Logged in as Client",
-        description: "Welcome to the client view!",
-      });
-    } else {
-      toast({
-        title: "Invalid credentials",
-        description: "Please use the test credentials provided",
+        title: "Please fill in all fields",
+        description: "Email and password are required",
         variant: "destructive",
       });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // First check Photographers table
+      const { data: photographerData, error: photographerError } = await supabase
+        .from("Photographers")
+        .select("*")
+        .eq("email", email)
+        .eq("password", password)
+        .single();
+
+      if (!photographerError && photographerData) {
+        // Found in Photographers table
+        setIsAuthenticated(true);
+        setIsPhotographer(true);
+        setUserId(photographerData.id.toString());
+        setIsSignInOpen(false);
+        setEmail("");
+        setPassword("");
+        
+        toast({
+          title: "Signed in as Photographer",
+          description: `Welcome back, ${photographerData.name}!`,
+        });
+        return;
+      }
+
+      // Check Clients table
+      const { data: clientData, error: clientError } = await supabase
+        .from("Clients")
+        .select("*")
+        .eq("email", email)
+        .eq("password", password)
+        .single();
+
+      if (!clientError && clientData) {
+        // Found in Clients table
+        setIsAuthenticated(true);
+        setIsPhotographer(false);
+        setUserId(clientData.id.toString());
+        setIsSignInOpen(false);
+        setEmail("");
+        setPassword("");
+        
+        toast({
+          title: "Signed in as Client",
+          description: `Welcome back, ${clientData.name}!`,
+        });
+        return;
+      }
+
+      // No match found
+      toast({
+        title: "Invalid credentials",
+        description: "Email or password is incorrect",
+        variant: "destructive",
+      });
+
+    } catch (error: any) {
+      console.error("Sign in error:", error);
+      toast({
+        title: "Sign in failed",
+        description: "An error occurred during sign in. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleSignOut = () => {
     setIsAuthenticated(false);
     setIsPhotographer(false);
-    setUsername("");
+    setUserId("");
+    setEmail("");
     setPassword("");
     toast({
       title: "Signed out",
@@ -233,7 +289,7 @@ export const Header = () => {
               </div>
             ) : (
               <div className="flex items-center gap-4">
-                <Dialog>
+                <Dialog open={isSignInOpen} onOpenChange={setIsSignInOpen}>
                   <DialogTrigger asChild>
                     <Button 
                       variant="outline" 
@@ -245,15 +301,15 @@ export const Header = () => {
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
-                      <DialogTitle>Test Login</DialogTitle>
+                      <DialogTitle>Sign In</DialogTitle>
                     </DialogHeader>
                     <div className="mt-4 space-y-4">
                       <div className="space-y-2">
                         <Input
-                          type="text"
-                          placeholder="Username"
-                          value={username}
-                          onChange={(e) => setUsername(e.target.value)}
+                          type="email"
+                          placeholder="Email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
                         />
                         <Input
                           type="password"
@@ -264,15 +320,11 @@ export const Header = () => {
                       </div>
                       <Button 
                         className="w-full"
-                        onClick={handleTestLogin}
+                        onClick={handleSignIn}
+                        disabled={isLoading}
                       >
-                        Login
+                        {isLoading ? "Signing In..." : "Sign In"}
                       </Button>
-                      <div className="text-sm text-gray-500">
-                        Test credentials:<br />
-                        Photographer: username="photo" password="photo"<br />
-                        Client: username="client" password="client"
-                      </div>
                     </div>
                   </DialogContent>
                 </Dialog>
@@ -347,7 +399,7 @@ export const Header = () => {
               </div>
             ) : (
               <div className="space-y-2 pt-2">
-                <Dialog>
+                <Dialog open={isSignInOpen} onOpenChange={setIsSignInOpen}>
                   <DialogTrigger asChild>
                     <Button 
                       variant="outline" 
@@ -359,15 +411,15 @@ export const Header = () => {
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
-                      <DialogTitle>Test Login</DialogTitle>
+                      <DialogTitle>Sign In</DialogTitle>
                     </DialogHeader>
                     <div className="mt-4 space-y-4">
                       <div className="space-y-2">
                         <Input
-                          type="text"
-                          placeholder="Username"
-                          value={username}
-                          onChange={(e) => setUsername(e.target.value)}
+                          type="email"
+                          placeholder="Email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
                         />
                         <Input
                           type="password"
@@ -378,15 +430,11 @@ export const Header = () => {
                       </div>
                       <Button 
                         className="w-full"
-                        onClick={handleTestLogin}
+                        onClick={handleSignIn}
+                        disabled={isLoading}
                       >
-                        Login
+                        {isLoading ? "Signing In..." : "Sign In"}
                       </Button>
-                      <div className="text-sm text-gray-500">
-                        Test credentials:<br />
-                        Photographer: username="photo" password="photo"<br />
-                        Client: username="client" password="client"
-                      </div>
                     </div>
                   </DialogContent>
                 </Dialog>
