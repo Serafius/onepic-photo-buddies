@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Search, Grid3X3, LogIn, Camera, LogOut, Image, Settings } from "lucide-react";
@@ -21,6 +20,7 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { Input } from "@/components/ui/input";
+import { ProfileIcon } from "./ProfileIcon";
 
 const categories = [
   { 
@@ -278,14 +278,12 @@ export const Header = () => {
                     </Button>
                   </div>
                 )}
-                <Button 
-                  variant="outline" 
-                  className="hover-scale border-primary text-primary hover:bg-primary hover:text-white"
-                  onClick={handleSignOut}
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Sign Out
-                </Button>
+                <ProfileIcon
+                  isAuthenticated={isAuthenticated}
+                  isPhotographer={isPhotographer}
+                  userId={userId}
+                  onSignOut={handleSignOut}
+                />
               </div>
             ) : (
               <div className="flex items-center gap-4">
@@ -384,18 +382,13 @@ export const Header = () => {
               </div>
             )}
             {isAuthenticated ? (
-              <div className="space-y-2 pt-2">
-                <div className="text-sm text-gray-600 py-2">
-                  Logged in as: {isPhotographer ? "Photographer" : "Client"}
-                </div>
-                <Button 
-                  variant="outline" 
-                  className="w-full border-primary text-primary hover:bg-primary hover:text-white"
-                  onClick={handleSignOut}
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Sign Out
-                </Button>
+              <div className="pt-2">
+                <ProfileIcon
+                  isAuthenticated={isAuthenticated}
+                  isPhotographer={isPhotographer}
+                  userId={userId}
+                  onSignOut={handleSignOut}
+                />
               </div>
             ) : (
               <div className="space-y-2 pt-2">

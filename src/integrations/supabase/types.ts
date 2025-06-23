@@ -210,6 +210,7 @@ export type Database = {
       }
       Photographers: {
         Row: {
+          bio: string | null
           city: string
           country: string
           email: string
@@ -219,9 +220,11 @@ export type Database = {
           name: string
           password: string
           profession: string
+          profile_picture_url: string | null
           username: string
         }
         Insert: {
+          bio?: string | null
           city: string
           country: string
           email?: string
@@ -231,9 +234,11 @@ export type Database = {
           name?: string
           password: string
           profession: string
+          profile_picture_url?: string | null
           username?: string
         }
         Update: {
+          bio?: string | null
           city?: string
           country?: string
           email?: string
@@ -243,6 +248,7 @@ export type Database = {
           name?: string
           password?: string
           profession?: string
+          profile_picture_url?: string | null
           username?: string
         }
         Relationships: []
