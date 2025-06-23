@@ -1,5 +1,7 @@
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Index from "@/pages/Index";
+import { SignUp } from "@/pages/SignUp";
 import { PhotographerPortfolio } from "@/components/PhotographerPortfolio";
 import { PhotographerDashboard } from "@/components/PhotographerDashboard";
 import { CategoryPage } from "@/pages/CategoryPage";
@@ -10,6 +12,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Index />} />
+        <Route path="/signup" element={<SignUp />} />
         <Route 
           path="/photographer/:id" 
           element={<PhotographerPortfolio />} 

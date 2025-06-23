@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Search, Grid3X3, LogIn, Camera, LogOut, Image, Settings } from "lucide-react";
@@ -231,49 +232,58 @@ export const Header = () => {
                 </Button>
               </div>
             ) : (
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    className="hover-scale border-primary text-primary hover:bg-primary hover:text-white"
-                  >
-                    <LogIn className="w-4 h-4 mr-2" />
-                    Sign In
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle>Test Login</DialogTitle>
-                  </DialogHeader>
-                  <div className="mt-4 space-y-4">
-                    <div className="space-y-2">
-                      <Input
-                        type="text"
-                        placeholder="Username"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                      />
-                      <Input
-                        type="password"
-                        placeholder="Password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                      />
-                    </div>
+              <div className="flex items-center gap-4">
+                <Dialog>
+                  <DialogTrigger asChild>
                     <Button 
-                      className="w-full"
-                      onClick={handleTestLogin}
+                      variant="outline" 
+                      className="hover-scale border-primary text-primary hover:bg-primary hover:text-white"
                     >
-                      Login
+                      <LogIn className="w-4 h-4 mr-2" />
+                      Sign In
                     </Button>
-                    <div className="text-sm text-gray-500">
-                      Test credentials:<br />
-                      Photographer: username="photo" password="photo"<br />
-                      Client: username="client" password="client"
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Test Login</DialogTitle>
+                    </DialogHeader>
+                    <div className="mt-4 space-y-4">
+                      <div className="space-y-2">
+                        <Input
+                          type="text"
+                          placeholder="Username"
+                          value={username}
+                          onChange={(e) => setUsername(e.target.value)}
+                        />
+                        <Input
+                          type="password"
+                          placeholder="Password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                        />
+                      </div>
+                      <Button 
+                        className="w-full"
+                        onClick={handleTestLogin}
+                      >
+                        Login
+                      </Button>
+                      <div className="text-sm text-gray-500">
+                        Test credentials:<br />
+                        Photographer: username="photo" password="photo"<br />
+                        Client: username="client" password="client"
+                      </div>
                     </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
+                  </DialogContent>
+                </Dialog>
+                <Button 
+                  variant="default" 
+                  className="hover-scale bg-primary text-white hover:bg-primary/90"
+                  onClick={() => navigate("/signup")}
+                >
+                  Sign Up
+                </Button>
+              </div>
             )}
           </div>
 
@@ -336,49 +346,58 @@ export const Header = () => {
                 </Button>
               </div>
             ) : (
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    className="w-full border-primary text-primary hover:bg-primary hover:text-white"
-                  >
-                    <LogIn className="w-4 h-4 mr-2" />
-                    Sign In
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle>Test Login</DialogTitle>
-                  </DialogHeader>
-                  <div className="mt-4 space-y-4">
-                    <div className="space-y-2">
-                      <Input
-                        type="text"
-                        placeholder="Username"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                      />
-                      <Input
-                        type="password"
-                        placeholder="Password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                      />
-                    </div>
+              <div className="space-y-2 pt-2">
+                <Dialog>
+                  <DialogTrigger asChild>
                     <Button 
-                      className="w-full"
-                      onClick={handleTestLogin}
+                      variant="outline" 
+                      className="w-full border-primary text-primary hover:bg-primary hover:text-white"
                     >
-                      Login
+                      <LogIn className="w-4 h-4 mr-2" />
+                      Sign In
                     </Button>
-                    <div className="text-sm text-gray-500">
-                      Test credentials:<br />
-                      Photographer: username="photo" password="photo"<br />
-                      Client: username="client" password="client"
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Test Login</DialogTitle>
+                    </DialogHeader>
+                    <div className="mt-4 space-y-4">
+                      <div className="space-y-2">
+                        <Input
+                          type="text"
+                          placeholder="Username"
+                          value={username}
+                          onChange={(e) => setUsername(e.target.value)}
+                        />
+                        <Input
+                          type="password"
+                          placeholder="Password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                        />
+                      </div>
+                      <Button 
+                        className="w-full"
+                        onClick={handleTestLogin}
+                      >
+                        Login
+                      </Button>
+                      <div className="text-sm text-gray-500">
+                        Test credentials:<br />
+                        Photographer: username="photo" password="photo"<br />
+                        Client: username="client" password="client"
+                      </div>
                     </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
+                  </DialogContent>
+                </Dialog>
+                <Button 
+                  variant="default" 
+                  className="w-full bg-primary text-white hover:bg-primary/90"
+                  onClick={() => navigate("/signup")}
+                >
+                  Sign Up
+                </Button>
+              </div>
             )}
           </div>
         )}
