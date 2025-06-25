@@ -1,10 +1,8 @@
-import { Header } from "@/components/Header";
-import { CategorySection } from "@/components/CategorySection";
-import { FeaturedPhotographers } from "@/components/FeaturedPhotographers";
 import { BrowsingGrid } from "@/components/BrowsingGrid";
-import { PhotographersDrawer } from "@/components/PhotographersDrawer";
 import { ClientBookingRequests } from "@/components/ClientBookingRequests";
+import { FeaturedPhotographers } from "@/components/FeaturedPhotographers";
 import { PhotographerDashboard } from "@/components/PhotographerDashboard";
+import { PhotographersDrawer } from "@/components/PhotographersDrawer";
 import { useEffect, useState } from "react";
 
 const Index = () => {
@@ -20,7 +18,7 @@ const Index = () => {
         const { isAuthenticated, role } = JSON.parse(tempAuthState);
         setIsAuthenticated(isAuthenticated);
         setUserRole(role);
-        
+
         // For testing, set a mock photographer ID when in photographer mode
         if (role === 'photographer') {
           setPhotographerId('mock-photographer-id');
@@ -42,8 +40,7 @@ const Index = () => {
   if (userRole === 'photographer' && photographerId) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Header />
-        <main className="pt-20">
+          <main className="pt-20">
           <PhotographerDashboard photographerId={photographerId} />
         </main>
       </div>
@@ -52,7 +49,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
       <main className="pt-20">
         <div className="container mx-auto px-4">
           {isAuthenticated && userRole === 'client' && (

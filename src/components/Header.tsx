@@ -1,12 +1,11 @@
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Menu, X } from "lucide-react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { MobileMenu } from "./MobileMenu";
 import { Navigation } from "./Navigation";
 import { UserActions } from "./UserActions";
-import { MobileMenu } from "./MobileMenu";
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
