@@ -1,8 +1,9 @@
 
 import { useToast } from "@/hooks/use-toast";
 import { Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { MobileMenu } from "./MobileMenu";
 import { Navigation } from "./Navigation";
 import { UserActions } from "./UserActions";
@@ -15,20 +16,60 @@ export const Header = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleSignIn = (isPhotographer: boolean, userId: string) => {
+  useEffect(() => {
+    // Check initial session
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await handleAuthUser(session.user.id);
+      }
+    };
+
+    checkSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (session?.user) {
+          await handleAuthUser(session.user.id);
+        } else {
+          setIsAuthenticated(false);
+          setIsPhotographer(false);
+          setUserId("");
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleAuthUser = async (authUserId: string) => {
+    // Check if user is a photographer
+    const { data: photographerData } = await supabase
+      .from("photographers")
+      .select("id")
+      .eq("user_id", authUserId)
+      .single();
+
     setIsAuthenticated(true);
-    setIsPhotographer(isPhotographer);
-    setUserId(userId);
+    setIsPhotographer(!!photographerData);
+    setUserId(authUserId);
   };
 
-  const handleSignOut = () => {
-    setIsAuthenticated(false);
-    setIsPhotographer(false);
-    setUserId("");
-    toast({
-      title: "Signed out",
-      description: "You have been signed out successfully.",
-    });
+  const handleSignIn = async (isPhotographer: boolean, userId: string) => {
+    // This will be handled by the auth state change listener
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: "Signed out",
+        description: "You have been signed out successfully.",
+      });
+    } catch (error) {
+      console.error("Sign out error:", error);
+    }
   };
 
   return (

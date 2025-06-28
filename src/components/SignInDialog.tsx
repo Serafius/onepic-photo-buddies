@@ -37,57 +37,40 @@ export const SignInDialog = ({ onSignIn }: SignInDialogProps) => {
     setIsLoading(true);
 
     try {
-      // First check Photographers table
-      const { data: photographerData, error: photographerError } = await supabase
-        .from("Photographers")
-        .select("*")
-        .eq("email", email)
-        .eq("password", password)
-        .single();
-
-      if (!photographerError && photographerData) {
-        // Found in Photographers table
-        onSignIn(true, photographerData.id.toString());
-        setIsSignInOpen(false);
-        setEmail("");
-        setPassword("");
-        
-        toast({
-          title: "Signed in as Photographer",
-          description: `Welcome back, ${photographerData.name}!`,
-        });
-        return;
-      }
-
-      // Check Clients table
-      const { data: clientData, error: clientError } = await supabase
-        .from("Clients")
-        .select("*")
-        .eq("email", email)
-        .eq("password", password)
-        .single();
-
-      if (!clientError && clientData) {
-        // Found in Clients table
-        onSignIn(false, clientData.id.toString());
-        setIsSignInOpen(false);
-        setEmail("");
-        setPassword("");
-        
-        toast({
-          title: "Signed in as Client",
-          description: `Welcome back, ${clientData.name}!`,
-        });
-        return;
-      }
-
-      // No match found
-      toast({
-        title: "Invalid credentials",
-        description: "Email or password is incorrect",
-        variant: "destructive",
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
 
+      if (error) {
+        toast({
+          title: "Sign in failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data.user) {
+        // Check if user is a photographer by looking in the photographers table
+        const { data: photographerData } = await supabase
+          .from("photographers")
+          .select("id")
+          .eq("user_id", data.user.id)
+          .single();
+
+        const isPhotographer = !!photographerData;
+        
+        onSignIn(isPhotographer, data.user.id);
+        setIsSignInOpen(false);
+        setEmail("");
+        setPassword("");
+        
+        toast({
+          title: `Signed in successfully`,
+          description: `Welcome back!`,
+        });
+      }
     } catch (error: any) {
       console.error("Sign in error:", error);
       toast({
@@ -128,6 +111,11 @@ export const SignInDialog = ({ onSignIn }: SignInDialogProps) => {
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleSignIn();
+                }
+              }}
             />
           </div>
           <Button 
