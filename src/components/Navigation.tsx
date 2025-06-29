@@ -1,5 +1,3 @@
-import { Link } from "react-router-dom";
-import { Search, Grid3X3, Camera } from "lucide-react";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -7,26 +5,28 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
+import { Camera, Grid3X3, Search } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const categories = [
-  { 
-    id: 1, 
-    name: "Weddings", 
+  {
+    id: 1,
+    name: "Weddings",
     description: "Capture your special day"
   },
-  { 
-    id: 2, 
-    name: "Portraits", 
+  {
+    id: 2,
+    name: "Portraits",
     description: "Professional headshots & portraits"
   },
-  { 
-    id: 3, 
-    name: "Events", 
+  {
+    id: 3,
+    name: "Events",
     description: "Corporate & social events"
   },
-  { 
-    id: 4, 
-    name: "Food", 
+  {
+    id: 4,
+    name: "Food",
     description: "Restaurant & culinary photography"
   }
 ];
@@ -63,7 +63,6 @@ export const Navigation = () => {
             </div>
           </NavigationMenuContent>
         </NavigationMenuItem>
-
         <NavigationMenuItem>
           <NavigationMenuTrigger className="text-gray-600 hover:text-primary transition-colors">
             <Grid3X3 className="w-4 h-4 mr-2" />
@@ -73,9 +72,9 @@ export const Navigation = () => {
             <div className="grid gap-3 p-6 w-[400px] md:w-[500px]">
               <div className="grid grid-cols-2 gap-4">
                 {categories.map((category) => (
-                  <Link 
-                    key={category.id} 
-                    to={`/category/${category.name.toLowerCase()}`} 
+                  <Link
+                    key={category.id}
+                    to={`/category/${category.name.toLowerCase()}`}
                     className="block group"
                   >
                     <div className="font-medium mb-1 group-hover:text-primary transition-colors">
@@ -90,7 +89,6 @@ export const Navigation = () => {
             </div>
           </NavigationMenuContent>
         </NavigationMenuItem>
-
         <NavigationMenuItem>
           <NavigationMenuTrigger className="text-gray-600 hover:text-primary transition-colors">
             <Camera className="w-4 h-4 mr-2" />

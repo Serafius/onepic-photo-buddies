@@ -40,7 +40,7 @@ const Index = () => {
   if (userRole === 'photographer' && photographerId) {
     return (
       <div className="min-h-screen bg-gray-50">
-          <main className="pt-20">
+        <main className="pt-20">
           <PhotographerDashboard photographerId={photographerId} />
         </main>
       </div>
