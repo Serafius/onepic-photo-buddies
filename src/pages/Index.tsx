@@ -1,8 +1,9 @@
 import { BrowsingGrid } from "@/components/BrowsingGrid";
 import { ClientBookingRequests } from "@/components/ClientBookingRequests";
-import { FeaturedPhotographers } from "@/components/FeaturedPhotographers";
 import { PhotographerDashboard } from "@/components/PhotographerDashboard";
 import { PhotographersDrawer } from "@/components/PhotographersDrawer";
+import { PhotographerList } from "@/components/PhotographersList";
+import { photographers } from "@/lib/data";
 import { useEffect, useState } from "react";
 
 const Index = () => {
@@ -61,7 +62,11 @@ const Index = () => {
               <BrowsingGrid />
             </div>
             <div className="lg:col-span-4 space-y-8 sticky top-24 h-fit">
-              <FeaturedPhotographers />
+              <PhotographerList
+                photographers={photographers}
+                size="compact"
+                title="Top Rated Photographers"
+              />
             </div>
           </div>
         </div>

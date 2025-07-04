@@ -8,6 +8,7 @@ import { CategoryPage } from "@/pages/CategoryPage";
 import { Toaster } from "@/components/ui/toaster";
 import Layout from "@/components/Layout";
 import { AllPhotographers } from "@/pages/photographers";
+import { FeaturedPhotographers } from "@/pages/featured";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route path="/" element={<Index />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/photographers" element={<AllPhotographers />} />
+          <Route path="/featured" element={<FeaturedPhotographers />} />
           <Route 
             path="/photographer/:id" 
             element={<PhotographerPortfolio />} 
