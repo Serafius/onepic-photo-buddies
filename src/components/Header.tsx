@@ -3,7 +3,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { MobileMenu } from "./MobileMenu";
 import { Navigation } from "./Navigation";
 import { UserActions } from "./UserActions";
@@ -17,59 +16,37 @@ export const Header = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check initial session
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        await handleAuthUser(session.user.id);
-      }
-    };
-
-    checkSession();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session?.user) {
-          await handleAuthUser(session.user.id);
-        } else {
-          setIsAuthenticated(false);
-          setIsPhotographer(false);
-          setUserId("");
-        }
-      }
-    );
-
-    return () => subscription.unsubscribe();
+    // Check if user is already signed in (from localStorage or sessionStorage)
+    const authData = localStorage.getItem('authUser');
+    if (authData) {
+      const { isPhotographer: storedIsPhotographer, userId: storedUserId } = JSON.parse(authData);
+      setIsAuthenticated(true);
+      setIsPhotographer(storedIsPhotographer);
+      setUserId(storedUserId);
+    }
   }, []);
 
-  const handleAuthUser = async (authUserId: string) => {
-    // Check if user is a photographer
-    const { data: photographerData } = await supabase
-      .from("photographers")
-      .select("id")
-      .eq("user_id", authUserId)
-      .single();
-
-    setIsAuthenticated(true);
-    setIsPhotographer(!!photographerData);
-    setUserId(authUserId);
-  };
-
   const handleSignIn = async (isPhotographer: boolean, userId: string) => {
-    // This will be handled by the auth state change listener
+    setIsAuthenticated(true);
+    setIsPhotographer(isPhotographer);
+    setUserId(userId);
+    
+    // Store auth state in localStorage
+    localStorage.setItem('authUser', JSON.stringify({ isPhotographer, userId }));
   };
 
   const handleSignOut = async () => {
-    try {
-      await supabase.auth.signOut();
-      toast({
-        title: "Signed out",
-        description: "You have been signed out successfully.",
-      });
-    } catch (error) {
-      console.error("Sign out error:", error);
-    }
+    setIsAuthenticated(false);
+    setIsPhotographer(false);
+    setUserId("");
+    
+    // Remove auth state from localStorage
+    localStorage.removeItem('authUser');
+    
+    toast({
+      title: "Signed out",
+      description: "You have been signed out successfully.",
+    });
   };
 
   return (

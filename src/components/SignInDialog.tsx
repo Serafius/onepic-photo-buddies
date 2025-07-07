@@ -37,40 +37,57 @@ export const SignInDialog = ({ onSignIn }: SignInDialogProps) => {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      // First, try to find user in Photographers table
+      const { data: photographerData, error: photographerError } = await supabase
+        .from("Photographers")
+        .select("*")
+        .eq("email", email)
+        .eq("password", password)
+        .single();
 
-      if (error) {
-        toast({
-          title: "Sign in failed",
-          description: error.message,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (data.user) {
-        // Check if user is a photographer by looking in the photographers table
-        const { data: photographerData } = await supabase
-          .from("photographers")
-          .select("id")
-          .eq("user_id", data.user.id)
-          .single();
-
-        const isPhotographer = !!photographerData;
-        
-        onSignIn(isPhotographer, data.user.id);
+      if (photographerData && !photographerError) {
+        // Found photographer
+        onSignIn(true, photographerData.id.toString());
         setIsSignInOpen(false);
         setEmail("");
         setPassword("");
         
         toast({
-          title: `Signed in successfully`,
-          description: `Welcome back!`,
+          title: "Signed in successfully",
+          description: `Welcome back, ${photographerData.name}!`,
         });
+        return;
       }
+
+      // If not found in Photographers, try Clients table
+      const { data: clientData, error: clientError } = await supabase
+        .from("Clients")
+        .select("*")
+        .eq("email", email)
+        .eq("password", password)
+        .single();
+
+      if (clientData && !clientError) {
+        // Found client
+        onSignIn(false, clientData.id.toString());
+        setIsSignInOpen(false);
+        setEmail("");
+        setPassword("");
+        
+        toast({
+          title: "Signed in successfully",
+          description: `Welcome back, ${clientData.name}!`,
+        });
+        return;
+      }
+
+      // No user found in either table
+      toast({
+        title: "Sign in failed",
+        description: "Invalid email or password",
+        variant: "destructive",
+      });
+
     } catch (error: any) {
       console.error("Sign in error:", error);
       toast({
