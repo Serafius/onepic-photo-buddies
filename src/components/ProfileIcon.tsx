@@ -24,6 +24,11 @@ export const ProfileIcon = ({ isAuthenticated, isPhotographer, userId, onSignOut
     return null;
   }
 
+  const handleSignOut = () => {
+    onSignOut();
+    setIsProfileOpen(false);
+  };
+
   return (
     <Popover open={isProfileOpen} onOpenChange={setIsProfileOpen}>
       <PopoverTrigger asChild>
@@ -61,11 +66,8 @@ export const ProfileIcon = ({ isAuthenticated, isPhotographer, userId, onSignOut
           
           <Button
             variant="ghost"
-            className="w-full justify-start"
-            onClick={() => {
-              onSignOut();
-              setIsProfileOpen(false);
-            }}
+            className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+            onClick={handleSignOut}
           >
             <LogOut className="mr-2 h-4 w-4" />
             Sign Out
