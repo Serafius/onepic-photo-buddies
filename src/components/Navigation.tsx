@@ -168,6 +168,22 @@ export const Navigation = () => {
                         View and manage client booking requests
                       </p>
                     </Link>
+                    <Link to="/photographer/1/manage" className="block group">
+                      <div className="font-medium mb-1 group-hover:text-primary transition-colors">
+                        Dashboard
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        Manage your profile and settings
+                      </p>
+                    </Link>
+                    <Link to="/photographer/1/portfolio" className="block group">
+                      <div className="font-medium mb-1 group-hover:text-primary transition-colors">
+                        Manage Portfolio
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        Upload and organize your portfolio images
+                      </p>
+                    </Link>
                   </div>
                 ) : (
                   <div className="space-y-2">

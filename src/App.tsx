@@ -28,7 +28,7 @@ function App() {
           />
           <Route 
             path="/photographer/:id/manage" 
-            element={<PhotographerDashboard photographerId="f47ac10b-58cc-4372-a567-0e02b2c3d479" />} 
+            element={<PhotographerDashboard />} 
           />
           <Route path="/category/:category" element={<CategoryPage />} />
           <Route path="/client/sessions" element={<ClientSessions />} />

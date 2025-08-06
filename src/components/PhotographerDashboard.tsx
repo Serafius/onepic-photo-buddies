@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,10 +27,12 @@ interface BookingRequest {
 }
 
 interface Props {
-  photographerId: string;
+  photographerId?: string;
 }
 
-export const PhotographerDashboard = ({ photographerId }: Props) => {
+export const PhotographerDashboard = ({ photographerId: propPhotographerId }: Props = {}) => {
+  const { id } = useParams<{ id: string }>();
+  const photographerId = propPhotographerId || id || "1";
   const [hourlyRate, setHourlyRate] = useState("");
   const [location, setLocation] = useState("");
   const [bio, setBio] = useState("");
