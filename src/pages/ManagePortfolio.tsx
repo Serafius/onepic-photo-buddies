@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -24,6 +25,26 @@ interface PortfolioImage {
   title: string | null;
   description: string | null;
   category_name: string | null;
+  created_at: string;
+}
+
+interface PortfolioPost {
+  id: string;
+  title: string;
+  description: string | null;
+  location: string | null;
+  created_at: string;
+  likes_count: number;
+  views_count: number;
+  is_featured: boolean;
+  images: PostImage[];
+}
+
+interface PostImage {
+  id: string;
+  image_url: string;
+  alt_text: string | null;
+  order_index: number;
 }
 
 interface Photographer {
@@ -44,47 +65,50 @@ export const ManagePortfolio = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [categories, setCategories] = useState<Category[]>([]);
   const [portfolioImages, setPortfolioImages] = useState<PortfolioImage[]>([]);
+  const [portfolioPosts, setPortfolioPosts] = useState<PortfolioPost[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
+  // Using the actual photographer ID that exists in the database
+  const mockPhotographerId = "f47ac10b-58cc-4372-a567-0e02b2c3d479";
+
   useEffect(() => {
-    if (id) {
-      fetchPhotographerData();
-      fetchCategories();
-      fetchPortfolioImages();
-    }
-  }, [id]);
+    fetchPhotographerData();
+    fetchCategories();
+    fetchPortfolioImages();
+    fetchPortfolioPosts();
+  }, []);
 
   const fetchPhotographerData = async () => {
-    if (!id) return;
-    
     try {
       const { data, error } = await supabase
         .from('photographers')
         .select('*')
-        .eq('id', id)
+        .eq('id', mockPhotographerId)
         .single();
 
       if (error) throw error;
       setPhotographer(data);
     } catch (error) {
       console.error('Error fetching photographer data:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load photographer data",
-        variant: "destructive",
+      // Set mock data if not found
+      setPhotographer({
+        id: mockPhotographerId,
+        name: "Test Photographer",
+        specialty: "Portrait Photography",
+        location: "New York, NY",
+        bio: "Professional photographer",
+        hourly_rate: 100
       });
     }
   };
 
   const fetchCategories = async () => {
-    if (!id) return;
-    
     try {
       const { data, error } = await supabase
         .from('photographer_categories')
         .select('*')
-        .eq('photographer_id', id);
+        .eq('photographer_id', mockPhotographerId);
 
       if (error) throw error;
       setCategories(data || []);
@@ -99,13 +123,11 @@ export const ManagePortfolio = () => {
   };
 
   const fetchPortfolioImages = async () => {
-    if (!id) return;
-    
     try {
       const { data, error } = await supabase
         .from('portfolio_images')
         .select('*')
-        .eq('photographer_id', id)
+        .eq('photographer_id', mockPhotographerId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -120,8 +142,59 @@ export const ManagePortfolio = () => {
     }
   };
 
+  const fetchPortfolioPosts = async () => {
+    try {
+      // Fetch portfolio posts
+      const { data: postsData, error: postsError } = await supabase
+        .from('portfolio_posts')
+        .select('*')
+        .eq('photographer_id', mockPhotographerId)
+        .order('created_at', { ascending: false });
+
+      if (postsError) throw postsError;
+
+      if (postsData && postsData.length > 0) {
+        // Fetch images for each post
+        const postIds = postsData.map(post => post.id);
+        const { data: imagesData, error: imagesError } = await supabase
+          .from('post_images')
+          .select('*')
+          .in('post_id', postIds)
+          .order('order_index', { ascending: true });
+
+        if (imagesError) throw imagesError;
+
+        // Group images by post_id
+        const imagesByPost: { [postId: string]: PostImage[] } = {};
+        imagesData?.forEach(image => {
+          if (!imagesByPost[image.post_id]) {
+            imagesByPost[image.post_id] = [];
+          }
+          imagesByPost[image.post_id].push(image);
+        });
+
+        // Combine posts with their images
+        const postsWithImages: PortfolioPost[] = postsData.map(post => ({
+          ...post,
+          images: imagesByPost[post.id] || []
+        }));
+
+        setPortfolioPosts(postsWithImages);
+      } else {
+        setPortfolioPosts([]);
+      }
+    } catch (error) {
+      console.error('Error fetching portfolio posts:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load portfolio posts",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleImageUpload = async () => {
-    if (!imageFile || !id) {
+    if (!imageFile) {
       toast({
         title: "Error",
         description: "Please select an image to upload",
@@ -133,7 +206,7 @@ export const ManagePortfolio = () => {
     setIsUploading(true);
     try {
       const fileExt = imageFile.name.split('.').pop();
-      const filePath = `${id}/${crypto.randomUUID()}.${fileExt}`;
+      const filePath = `${mockPhotographerId}/${crypto.randomUUID()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('portfolio')
@@ -150,7 +223,7 @@ export const ManagePortfolio = () => {
       const { error: dbError } = await supabase
         .from('portfolio_images')
         .insert({
-          photographer_id: id,
+          photographer_id: mockPhotographerId,
           image_url: publicUrl,
           title: imageTitle || null,
           description: imageDescription || null,
@@ -218,6 +291,58 @@ export const ManagePortfolio = () => {
     }
   };
 
+  const handleDeletePost = async (postId: string) => {
+    try {
+      // First, delete associated images from storage and database
+      const postImages = portfolioPosts.find(post => post.id === postId)?.images || [];
+      
+      for (const image of postImages) {
+        // Extract file path from URL
+        try {
+          const url = new URL(image.image_url);
+          const filePath = url.pathname.split('/').slice(-2).join('/');
+          
+          // Delete from storage
+          await supabase.storage
+            .from('portfolio')
+            .remove([filePath]);
+        } catch (storageError) {
+          console.warn('Storage deletion error:', storageError);
+        }
+      }
+
+      // Delete post images from database
+      const { error: imagesError } = await supabase
+        .from('post_images')
+        .delete()
+        .eq('post_id', postId);
+
+      if (imagesError) console.warn('Error deleting post images:', imagesError);
+
+      // Delete the post
+      const { error: postError } = await supabase
+        .from('portfolio_posts')
+        .delete()
+        .eq('id', postId);
+
+      if (postError) throw postError;
+
+      toast({
+        title: "Success",
+        description: "Portfolio post deleted successfully",
+      });
+
+      fetchPortfolioPosts();
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete portfolio post",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (!photographer) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -225,6 +350,8 @@ export const ManagePortfolio = () => {
       </div>
     );
   }
+
+  const totalItems = portfolioImages.length + portfolioPosts.length;
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
@@ -246,8 +373,8 @@ export const ManagePortfolio = () => {
         <Card>
           <CardContent className="p-4 text-center">
             <Images className="h-8 w-8 mx-auto mb-2 text-primary" />
-            <p className="text-2xl font-bold">{portfolioImages.length}</p>
-            <p className="text-sm text-muted-foreground">Portfolio Images</p>
+            <p className="text-2xl font-bold">{totalItems}</p>
+            <p className="text-sm text-muted-foreground">Total Portfolio Items</p>
           </CardContent>
         </Card>
         <Card>
@@ -339,49 +466,114 @@ export const ManagePortfolio = () => {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Images className="h-6 w-6" />
-            <CardTitle>Current Portfolio ({portfolioImages.length} images)</CardTitle>
+            <CardTitle>Current Portfolio ({totalItems} items)</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
-          {portfolioImages.length === 0 ? (
+          {totalItems === 0 ? (
             <div className="text-center py-8">
               <Images className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-muted-foreground">No portfolio images yet</p>
-              <p className="text-sm text-muted-foreground">Upload your first image to get started</p>
+              <p className="text-muted-foreground">No portfolio items yet</p>
+              <p className="text-sm text-muted-foreground">Upload your first image or create a post to get started</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {portfolioImages.map((image) => (
-                <div key={image.id} className="relative aspect-square group bg-muted rounded-lg overflow-hidden">
-                  <img
-                    src={image.image_url}
-                    alt={image.title || "Portfolio image"}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-4 text-white flex flex-col justify-between">
-                    <div>
-                      {image.title && <h3 className="font-semibold text-sm">{image.title}</h3>}
-                      {image.category_name && (
-                        <Badge variant="secondary" className="mt-1 text-xs">
-                          {image.category_name}
-                        </Badge>
-                      )}
-                      {image.description && (
-                        <p className="text-xs mt-2 line-clamp-3">{image.description}</p>
-                      )}
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleDeleteImage(image.id, image.image_url)}
-                      className="w-full mt-2"
-                    >
-                      <Trash2 className="h-3 w-3 mr-1" />
-                      Delete
-                    </Button>
+            <div className="space-y-8">
+              {/* Portfolio Posts */}
+              {portfolioPosts.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Portfolio Posts ({portfolioPosts.length})</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {portfolioPosts.map((post) => {
+                      const mainImage = post.images[0];
+                      
+                      return (
+                        <div key={post.id} className="relative aspect-square group bg-muted rounded-lg overflow-hidden">
+                          {mainImage ? (
+                            <img
+                              src={mainImage.image_url}
+                              alt={mainImage.alt_text || post.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Images className="h-12 w-12 text-muted-foreground" />
+                            </div>
+                          )}
+                          {post.images.length > 1 && (
+                            <Badge variant="secondary" className="absolute top-2 right-2">
+                              +{post.images.length - 1}
+                            </Badge>
+                          )}
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-4 text-white flex flex-col justify-between">
+                            <div>
+                              <h4 className="font-semibold text-sm mb-1">{post.title}</h4>
+                              {post.location && (
+                                <p className="text-xs text-gray-300 mb-2">{post.location}</p>
+                              )}
+                              {post.description && (
+                                <p className="text-xs line-clamp-3">{post.description}</p>
+                              )}
+                              <div className="flex items-center gap-2 mt-2 text-xs">
+                                <span>❤️ {post.likes_count}</span>
+                                <span>👁️ {post.views_count}</span>
+                              </div>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleDeletePost(post.id)}
+                              className="w-full mt-2"
+                            >
+                              <Trash2 className="h-3 w-3 mr-1" />
+                              Delete Post
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-              ))}
+              )}
+
+              {/* Portfolio Images */}
+              {portfolioImages.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Portfolio Images ({portfolioImages.length})</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {portfolioImages.map((image) => (
+                      <div key={image.id} className="relative aspect-square group bg-muted rounded-lg overflow-hidden">
+                        <img
+                          src={image.image_url}
+                          alt={image.title || "Portfolio image"}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-4 text-white flex flex-col justify-between">
+                          <div>
+                            {image.title && <h4 className="font-semibold text-sm">{image.title}</h4>}
+                            {image.category_name && (
+                              <Badge variant="secondary" className="mt-1 text-xs">
+                                {image.category_name}
+                              </Badge>
+                            )}
+                            {image.description && (
+                              <p className="text-xs mt-2 line-clamp-3">{image.description}</p>
+                            )}
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleDeleteImage(image.id, image.image_url)}
+                            className="w-full mt-2"
+                          >
+                            <Trash2 className="h-3 w-3 mr-1" />
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
