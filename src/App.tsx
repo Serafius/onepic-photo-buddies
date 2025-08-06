@@ -11,6 +11,7 @@ import { AllPhotographers } from "@/pages/photographers";
 import { FeaturedPhotographers } from "@/pages/featured";
 import { ClientSessions } from "@/pages/ClientSessions";
 import { PhotographerBookings } from "@/pages/PhotographerBookings";
+import { ManagePortfolio } from "@/pages/ManagePortfolio";
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
           <Route path="/category/:category" element={<CategoryPage />} />
           <Route path="/client/sessions" element={<ClientSessions />} />
           <Route path="/photographer/bookings" element={<PhotographerBookings />} />
+          <Route path="/photographer/:id/portfolio" element={<ManagePortfolio />} />
         </Routes>
         <Toaster />
       </Layout>
