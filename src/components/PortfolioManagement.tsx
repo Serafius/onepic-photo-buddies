@@ -29,19 +29,34 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [categories, setCategories] = useState<Category[]>([]);
   const [portfolioImages, setPortfolioImages] = useState<PortfolioImage[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchCategories();
-    fetchPortfolioImages();
+    if (photographerId) {
+      fetchCategories();
+      fetchPortfolioImages();
+    }
   }, [photographerId]);
 
   const fetchCategories = async () => {
     try {
+      // Get current photographer UUID from auth
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: photographer } = await supabase
+        .from('photographers')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!photographer) return;
+
       const { data, error } = await supabase
         .from('photographer_categories')
         .select('*')
-        .eq('photographer_id', photographerId);
+        .eq('photographer_id', photographer.id);
 
       if (error) throw error;
       setCategories(data || []);
@@ -57,10 +72,22 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
 
   const fetchPortfolioImages = async () => {
     try {
+      // Get current photographer UUID from auth
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: photographer } = await supabase
+        .from('photographers')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!photographer) return;
+
       const { data, error } = await supabase
         .from('portfolio_images')
         .select('*')
-        .eq('photographer_id', photographerId);
+        .eq('photographer_id', photographer.id);
 
       if (error) throw error;
       setPortfolioImages(data || []);
@@ -84,9 +111,36 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
       return;
     }
 
+    setIsUploading(true);
     try {
+      // Get current photographer UUID from auth
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to upload images",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { data: photographer } = await supabase
+        .from('photographers')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!photographer) {
+        toast({
+          title: "Error",
+          description: "Photographer profile not found",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const fileExt = imageFile.name.split('.').pop();
-      const filePath = `${photographerId}/${crypto.randomUUID()}.${fileExt}`;
+      const filePath = `${photographer.id}/${crypto.randomUUID()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('portfolio')
@@ -101,10 +155,10 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
       const { error: dbError } = await supabase
         .from('portfolio_images')
         .insert({
-          photographer_id: photographerId,
+          photographer_id: photographer.id,
           image_url: publicUrl,
-          title: imageTitle,
-          description: imageDescription
+          title: imageTitle || null,
+          description: imageDescription || null
         });
 
       if (dbError) throw dbError;
@@ -125,6 +179,8 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
         description: "Failed to upload image",
         variant: "destructive",
       });
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -177,8 +233,9 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
               className="mt-1"
             />
           </div>
-          <Button onClick={handleImageUpload} className="w-full">
-            <Upload className="mr-2 h-4 w-4" /> Upload Image
+          <Button onClick={handleImageUpload} disabled={isUploading} className="w-full">
+            <Upload className="mr-2 h-4 w-4" /> 
+            {isUploading ? "Uploading..." : "Upload Image"}
           </Button>
         </CardContent>
       </Card>
