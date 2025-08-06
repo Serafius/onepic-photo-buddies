@@ -68,24 +68,15 @@ export const PortfolioPosts = () => {
 
   const fetchPhotographerData = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast({
-          title: "Error",
-          description: "You must be logged in to view this page",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('photographers')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (error) throw error;
-      setPhotographer(data);
+      // For now, use a mock photographer until auth is implemented
+      const mockPhotographer = {
+        id: "01940d95-2c69-7dac-abd2-05a7b7b1ba47",
+        name: "Test Photographer",
+        specialty: "Portrait Photography",
+        location: "New York, NY"
+      };
+      
+      setPhotographer(mockPhotographer);
     } catch (error) {
       console.error('Error fetching photographer data:', error);
       toast({
@@ -98,21 +89,13 @@ export const PortfolioPosts = () => {
 
   const fetchPosts = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: photographer } = await supabase
-        .from('photographers')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!photographer) return;
+      // For now, use a mock photographer ID until auth is implemented
+      const mockPhotographerId = "01940d95-2c69-7dac-abd2-05a7b7b1ba47";
 
       const { data: postsData, error: postsError } = await supabase
         .from('portfolio_posts')
         .select('*')
-        .eq('photographer_id', photographer.id)
+        .eq('photographer_id', mockPhotographerId)
         .order('created_at', { ascending: false });
 
       if (postsError) throw postsError;
@@ -179,36 +162,14 @@ export const PortfolioPosts = () => {
 
     setIsUploading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast({
-          title: "Error",
-          description: "You must be logged in to create posts",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const { data: photographer } = await supabase
-        .from('photographers')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!photographer) {
-        toast({
-          title: "Error", 
-          description: "Photographer profile not found",
-          variant: "destructive",
-        });
-        return;
-      }
+      // For now, use a mock photographer ID until auth is implemented
+      const mockPhotographerId = "01940d95-2c69-7dac-abd2-05a7b7b1ba47";
 
       // Create the post first
       const { data: postData, error: postError } = await supabase
         .from('portfolio_posts')
         .insert({
-          photographer_id: photographer.id,
+          photographer_id: mockPhotographerId,
           title: newPostTitle,
           description: newPostDescription || null,
           location: newPostLocation || null,

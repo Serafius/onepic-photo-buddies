@@ -41,22 +41,13 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
 
   const fetchCategories = async () => {
     try {
-      // Get current photographer UUID from auth
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: photographer } = await supabase
-        .from('photographers')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!photographer) return;
-
+      // For now, use a mock photographer ID until auth is implemented
+      const mockPhotographerId = "01940d95-2c69-7dac-abd2-05a7b7b1ba47"; // Mock UUID
+      
       const { data, error } = await supabase
         .from('photographer_categories')
         .select('*')
-        .eq('photographer_id', photographer.id);
+        .eq('photographer_id', mockPhotographerId);
 
       if (error) throw error;
       setCategories(data || []);
@@ -72,22 +63,13 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
 
   const fetchPortfolioImages = async () => {
     try {
-      // Get current photographer UUID from auth
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: photographer } = await supabase
-        .from('photographers')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!photographer) return;
-
+      // For now, use a mock photographer ID until auth is implemented
+      const mockPhotographerId = "01940d95-2c69-7dac-abd2-05a7b7b1ba47"; // Mock UUID
+      
       const { data, error } = await supabase
         .from('portfolio_images')
         .select('*')
-        .eq('photographer_id', photographer.id);
+        .eq('photographer_id', mockPhotographerId);
 
       if (error) throw error;
       setPortfolioImages(data || []);
@@ -113,34 +95,11 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
 
     setIsUploading(true);
     try {
-      // Get current photographer UUID from auth
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast({
-          title: "Error",
-          description: "You must be logged in to upload images",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const { data: photographer } = await supabase
-        .from('photographers')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!photographer) {
-        toast({
-          title: "Error",
-          description: "Photographer profile not found",
-          variant: "destructive",
-        });
-        return;
-      }
+      // For now, use a mock photographer ID until auth is implemented
+      const mockPhotographerId = "01940d95-2c69-7dac-abd2-05a7b7b1ba47"; // Mock UUID
 
       const fileExt = imageFile.name.split('.').pop();
-      const filePath = `${photographer.id}/${crypto.randomUUID()}.${fileExt}`;
+      const filePath = `${mockPhotographerId}/${crypto.randomUUID()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('portfolio')
@@ -155,7 +114,7 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
       const { error: dbError } = await supabase
         .from('portfolio_images')
         .insert({
-          photographer_id: photographer.id,
+          photographer_id: mockPhotographerId,
           image_url: publicUrl,
           title: imageTitle || null,
           description: imageDescription || null
