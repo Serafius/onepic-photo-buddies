@@ -10,6 +10,7 @@ import Layout from "@/components/Layout";
 import { AllPhotographers } from "@/pages/photographers";
 import { FeaturedPhotographers } from "@/pages/featured";
 import { ClientSessions } from "@/pages/ClientSessions";
+import { PhotographerBookings } from "@/pages/PhotographerBookings";
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
           />
           <Route path="/category/:category" element={<CategoryPage />} />
           <Route path="/client/sessions" element={<ClientSessions />} />
+          <Route path="/photographer/bookings" element={<PhotographerBookings />} />
         </Routes>
         <Toaster />
       </Layout>

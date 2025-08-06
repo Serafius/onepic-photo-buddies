@@ -137,6 +137,65 @@ export const PhotographerPortfolio = () => {
     fetchPortfolio();
   }, [id, toast]);
 
+  const handleBooking = async () => {
+    const authData = localStorage.getItem('authData');
+    if (!authData) {
+      toast({
+        title: "Error",
+        description: "Please sign in to book a photographer",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const { userId, isPhotographer } = JSON.parse(authData);
+    
+    if (isPhotographer) {
+      toast({
+        title: "Error", 
+        description: "Photographers cannot book other photographers",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!message.trim()) {
+      toast({
+        title: "Error",
+        description: "Please add a message to your booking request",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('booking_requests')
+        .insert({
+          photographer_id: id,
+          client_id: userId,
+          message: message,
+          status: 'pending'
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Booking request sent successfully!",
+      });
+      
+      setMessage("");
+    } catch (error) {
+      console.error('Error creating booking:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send booking request",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleCategoryClick = async (category: typeof staticCategories[0]) => {
     setMessage(category.bookingMessage);
     const bookingSection = document.getElementById('booking-section');
@@ -249,7 +308,7 @@ export const PhotographerPortfolio = () => {
             className="w-full p-2 border rounded-md"
             rows={4}
           />
-          <Button onClick={() => { /* Handle booking logic here */ }} className="w-full">
+          <Button onClick={handleBooking} className="w-full">
             Book Now
           </Button>
         </div>

@@ -29,24 +29,31 @@ export const BrowsingGrid = () => {
   const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
   const [commentText, setCommentText] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [authUserId, setAuthUserId] = useState<string | null>(null);
 
   useEffect(() => {
+    // Get user ID from localStorage 
+    const authData = localStorage.getItem('authData');
+    if (authData) {
+      const { userId } = JSON.parse(authData);
+      setAuthUserId(userId);
+    }
+    
     fetchPhotos();
-    fetchUserLikes();
+    if (authUserId) {
+      fetchUserLikes();
+    }
     console.log("Current category:", category);
-  }, [category]);
+  }, [category, authUserId]);
 
   const fetchUserLikes = async () => {
-    const authData = localStorage.getItem('authData');
-    if (!authData) return;
+    if (!authUserId) return;
 
-    const { userId } = JSON.parse(authData);
-    
     try {
       const { data, error } = await supabase
         .from('user_likes')
         .select('image_id')
-        .eq('user_id', userId);
+        .eq('user_id', authUserId);
 
       if (error) throw error;
       
@@ -124,8 +131,7 @@ export const BrowsingGrid = () => {
   };
 
   const handleLike = async (photoId: string) => {
-    const authData = localStorage.getItem('authData');
-    if (!authData) {
+    if (!authUserId) {
       toast({
         title: "Error",
         description: "Please sign in to like photos",
@@ -133,8 +139,6 @@ export const BrowsingGrid = () => {
       });
       return;
     }
-
-    const { userId } = JSON.parse(authData);
     
     try {
       if (likedPhotos.includes(photoId)) {
@@ -142,26 +146,29 @@ export const BrowsingGrid = () => {
         await supabase
           .from('user_likes')
           .delete()
-          .eq('user_id', userId)
+          .eq('user_id', authUserId)
           .eq('image_id', photoId);
         
         setLikedPhotos(prev => prev.filter(id => id !== photoId));
+        toast({
+          title: "Success",
+          description: "Photo unliked",
+        });
       } else {
         // Add like
         await supabase
           .from('user_likes')
           .insert({
-            user_id: userId,
+            user_id: authUserId,
             image_id: photoId
           });
         
         setLikedPhotos(prev => [...prev, photoId]);
+        toast({
+          title: "Success", 
+          description: "Photo liked",
+        });
       }
-      
-      toast({
-        title: "Success",
-        description: likedPhotos.includes(photoId) ? "Photo unliked" : "Photo liked",
-      });
     } catch (error) {
       console.error('Error handling like:', error);
       toast({

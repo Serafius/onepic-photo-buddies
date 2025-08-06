@@ -42,7 +42,7 @@ export const CategoryPage = () => {
           image_url,
           title,
           description,
-          photographer:photographers (
+          photographer:photographers!inner (
             name,
             location
           )
@@ -70,15 +70,20 @@ export const CategoryPage = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [page, isLoading, hasMore, category]);
+  }, [page, isLoading, hasMore, category, selectedLocation]);
 
   useEffect(() => {
     // Reset state when category changes
     setImages([]);
     setPage(0);
     setHasMore(true);
-    loadImages();
   }, [category, selectedLocation]);
+
+  useEffect(() => {
+    if (images.length === 0 && page === 0) {
+      loadImages();
+    }
+  }, [images.length, page, loadImages]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
