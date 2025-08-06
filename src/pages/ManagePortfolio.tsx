@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -130,20 +129,12 @@ export const ManagePortfolio = () => {
         .from('portfolio_images')
         .select('*')
         .eq('photographer_id', mockPhotographerId)
-        .order('created_at', { ascending: false })
-        .limit(20); // Limit to recent images
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       
       console.log('Portfolio images fetched:', data);
-      
-      // Filter out seed/sample data and show only recent uploads or user-uploaded content
-      const userImages = data?.filter(img => 
-        img.image_url.includes('supabase.co/storage') || // User uploaded images
-        new Date(img.created_at) > new Date('2025-01-24T13:00:00') // Recent images after seed data
-      ) || [];
-      
-      setPortfolioImages(userImages);
+      setPortfolioImages(data || []);
     } catch (error) {
       console.error('Error fetching portfolio images:', error);
       toast({
@@ -158,7 +149,7 @@ export const ManagePortfolio = () => {
     try {
       console.log('Fetching portfolio posts for photographer:', mockPhotographerId);
       
-      // Fetch portfolio posts
+      // Fetch ONLY posts created by this photographer
       const { data: postsData, error: postsError } = await supabase
         .from('portfolio_posts')
         .select('*')
@@ -167,7 +158,7 @@ export const ManagePortfolio = () => {
 
       if (postsError) throw postsError;
       
-      console.log('Portfolio posts fetched:', postsData);
+      console.log('Portfolio posts fetched for current photographer:', postsData);
 
       if (postsData && postsData.length > 0) {
         // Fetch images for each post
