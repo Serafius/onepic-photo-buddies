@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -35,19 +36,19 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
   useEffect(() => {
     fetchCategories();
     fetchPortfolioImages();
-  }, []);
+  }, [photographerId]);
 
   const fetchCategories = async () => {
     try {
-      // Using the actual photographer ID that exists in the database
-      const mockPhotographerId = "f47ac10b-58cc-4372-a567-0e02b2c3d479";
+      console.log('Fetching categories for photographer:', photographerId);
       
       const { data, error } = await supabase
         .from('photographer_categories')
         .select('*')
-        .eq('photographer_id', mockPhotographerId);
+        .eq('photographer_id', photographerId);
 
       if (error) throw error;
+      console.log('Categories fetched:', data);
       setCategories(data || []);
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -61,15 +62,17 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
 
   const fetchPortfolioImages = async () => {
     try {
-      // Using the actual photographer ID that exists in the database
-      const mockPhotographerId = "f47ac10b-58cc-4372-a567-0e02b2c3d479";
+      console.log('Fetching portfolio images for photographer:', photographerId);
       
       const { data, error } = await supabase
         .from('portfolio_images')
         .select('*')
-        .eq('photographer_id', mockPhotographerId);
+        .eq('photographer_id', photographerId)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
+      
+      console.log('Portfolio images fetched:', data);
       setPortfolioImages(data || []);
     } catch (error) {
       console.error('Error fetching portfolio images:', error);
@@ -93,11 +96,8 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
 
     setIsUploading(true);
     try {
-      // Using the actual photographer ID that exists in the database
-      const mockPhotographerId = "f47ac10b-58cc-4372-a567-0e02b2c3d479";
-
       const fileExt = imageFile.name.split('.').pop();
-      const filePath = `${mockPhotographerId}/${crypto.randomUUID()}.${fileExt}`;
+      const filePath = `${photographerId}/${crypto.randomUUID()}.${fileExt}`;
 
       console.log('Uploading to storage path:', filePath);
       
@@ -114,12 +114,12 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
         .from('portfolio')
         .getPublicUrl(filePath);
 
-      console.log('Inserting to database with photographer_id:', mockPhotographerId);
+      console.log('Inserting to database with photographer_id:', photographerId);
 
       const { error: dbError } = await supabase
         .from('portfolio_images')
         .insert({
-          photographer_id: mockPhotographerId,
+          photographer_id: photographerId,
           image_url: publicUrl,
           title: imageTitle || null,
           description: imageDescription || null
