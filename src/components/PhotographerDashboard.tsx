@@ -30,13 +30,16 @@ interface Props {
 }
 
 export const PhotographerDashboard = ({ photographerId }: Props) => {
-  const [hourlyRate, setHourlyRate] = useState("150");
-  const [location, setLocation] = useState("New York, NY");
-  const [bio, setBio] = useState("Professional photographer with 10 years of experience");
+  const [hourlyRate, setHourlyRate] = useState("");
+  const [location, setLocation] = useState("");
+  const [bio, setBio] = useState("");
   const [imageTitle, setImageTitle] = useState("");
   const [imageDescription, setImageDescription] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [photographerName, setPhotographerName] = useState("Sarah SMITH");
+  const [profilePictureFile, setProfilePictureFile] = useState<File | null>(null);
+  const [photographerName, setPhotographerName] = useState("");
+  const [profilePictureUrl, setProfilePictureUrl] = useState("");
+  const [specialty, setSpecialty] = useState("");
   const [bookingRequests, setBookingRequests] = useState<BookingRequest[]>([]);
   const { toast } = useToast();
 
@@ -48,18 +51,21 @@ export const PhotographerDashboard = ({ photographerId }: Props) => {
   const fetchPhotographerData = async () => {
     try {
       const { data, error } = await supabase
-        .from('photographers')
+        .from('Photographers')
         .select('*')
-        .eq('id', photographerId)
+        .eq('id', parseInt(photographerId))
         .single();
 
       if (error) throw error;
 
       if (data) {
-        setHourlyRate(data.hourly_rate.toString());
+        setPhotographerName(data.name || '');
         setLocation(data.location || '');
         setBio(data.bio || '');
-        setPhotographerName(data.name);
+        setSpecialty(data.profession || '');
+        setProfilePictureUrl(data.profile_picture_url || '');
+        // Note: Photographers table doesn't have hourly_rate, you may need to add it or use a default
+        setHourlyRate('150'); // Default for now
       }
     } catch (error) {
       console.error('Error fetching photographer data:', error);
@@ -103,13 +109,14 @@ export const PhotographerDashboard = ({ photographerId }: Props) => {
   const updateProfile = async () => {
     try {
       const { error } = await supabase
-        .from('photographers')
+        .from('Photographers')
         .update({
-          hourly_rate: parseFloat(hourlyRate),
+          name: photographerName,
           location,
-          bio
+          bio,
+          profession: specialty
         })
-        .eq('id', photographerId);
+        .eq('id', parseInt(photographerId));
 
       if (error) throw error;
 
@@ -122,6 +129,54 @@ export const PhotographerDashboard = ({ photographerId }: Props) => {
       toast({
         title: "Error",
         description: "Failed to update profile",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleProfilePictureUpload = async () => {
+    if (!profilePictureFile) {
+      toast({
+        title: "Error",
+        description: "Please select a profile picture to upload",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const fileExt = profilePictureFile.name.split('.').pop();
+      const filePath = `profiles/${photographerId}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('portfolio')
+        .upload(filePath, profilePictureFile, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('portfolio')
+        .getPublicUrl(filePath);
+
+      const { error: dbError } = await supabase
+        .from('Photographers')
+        .update({ profile_picture_url: publicUrl })
+        .eq('id', parseInt(photographerId));
+
+      if (dbError) throw dbError;
+
+      setProfilePictureUrl(publicUrl);
+      setProfilePictureFile(null);
+
+      toast({
+        title: "Success",
+        description: "Profile picture updated successfully",
+      });
+    } catch (error) {
+      console.error('Error uploading profile picture:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload profile picture",
         variant: "destructive",
       });
     }
@@ -211,14 +266,15 @@ export const PhotographerDashboard = ({ photographerId }: Props) => {
       {/* Profile Header */}
       <div className="flex items-center gap-4 mb-8">
         <Avatar className="h-16 w-16">
-          <AvatarImage src="" />
+          <AvatarImage src={profilePictureUrl} />
           <AvatarFallback>
             <User className="h-8 w-8" />
           </AvatarFallback>
         </Avatar>
         <div>
-          <h1 className="text-2xl font-bold">{photographerName}</h1>
+          <h1 className="text-2xl font-bold">{photographerName || 'Loading...'}</h1>
           <p className="text-gray-600">{location}</p>
+          {specialty && <p className="text-sm text-gray-500">{specialty}</p>}
         </div>
       </div>
 
@@ -228,6 +284,33 @@ export const PhotographerDashboard = ({ photographerId }: Props) => {
           <CardTitle>Profile Settings</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Profile Picture</label>
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setProfilePictureFile(e.target.files?.[0] || null)}
+              className="mb-2"
+            />
+            <Button onClick={handleProfilePictureUpload} disabled={!profilePictureFile} size="sm">
+              Upload Profile Picture
+            </Button>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Name</label>
+            <Input
+              value={photographerName}
+              onChange={(e) => setPhotographerName(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Specialty/Profession</label>
+            <Input
+              value={specialty}
+              onChange={(e) => setSpecialty(e.target.value)}
+              placeholder="e.g., Wedding Photographer, Portrait Photographer"
+            />
+          </div>
           <div>
             <label className="block text-sm font-medium mb-1">Hourly Rate ($)</label>
             <Input
