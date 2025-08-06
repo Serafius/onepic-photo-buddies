@@ -9,6 +9,7 @@ import { Toaster } from "@/components/ui/toaster";
 import Layout from "@/components/Layout";
 import { AllPhotographers } from "@/pages/photographers";
 import { FeaturedPhotographers } from "@/pages/featured";
+import { ClientSessions } from "@/pages/ClientSessions";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
             element={<PhotographerDashboard photographerId="f47ac10b-58cc-4372-a567-0e02b2c3d479" />} 
           />
           <Route path="/category/:category" element={<CategoryPage />} />
+          <Route path="/client/sessions" element={<ClientSessions />} />
         </Routes>
         <Toaster />
       </Layout>

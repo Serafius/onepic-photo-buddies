@@ -5,8 +5,9 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
-import { Camera, Grid3X3, Search } from "lucide-react";
+import { Camera, Grid3X3, Search, Calendar, BookOpen } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 const categories = [
   {
@@ -32,6 +33,27 @@ const categories = [
 ];
 
 export const Navigation = () => {
+  const [authData, setAuthData] = useState<{isAuthenticated: boolean, isPhotographer: boolean} | null>(null);
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const stored = localStorage.getItem('authData');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setAuthData({
+          isAuthenticated: parsed.isAuthenticated,
+          isPhotographer: parsed.isPhotographer
+        });
+      } else {
+        setAuthData({ isAuthenticated: false, isPhotographer: false });
+      }
+    };
+
+    checkAuth();
+    window.addEventListener('storage', checkAuth);
+    return () => window.removeEventListener('storage', checkAuth);
+  }, []);
+
   return (
     <NavigationMenu>
       <NavigationMenuList>
@@ -117,6 +139,52 @@ export const Navigation = () => {
             </div>
           </NavigationMenuContent>
         </NavigationMenuItem>
+        
+        {/* Conditional navigation items based on auth status */}
+        {authData?.isAuthenticated && (
+          <NavigationMenuItem>
+            <NavigationMenuTrigger className="text-gray-600 hover:text-primary transition-colors">
+              {authData.isPhotographer ? (
+                <>
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  Bookings
+                </>
+              ) : (
+                <>
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Sessions
+                </>
+              )}
+            </NavigationMenuTrigger>
+            <NavigationMenuContent>
+              <div className="grid gap-3 p-6 w-[300px]">
+                {authData.isPhotographer ? (
+                  <div className="space-y-2">
+                    <Link to="/photographer/bookings" className="block group">
+                      <div className="font-medium mb-1 group-hover:text-primary transition-colors">
+                        Manage Bookings
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        View and manage client booking requests
+                      </p>
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Link to="/client/sessions" className="block group">
+                      <div className="font-medium mb-1 group-hover:text-primary transition-colors">
+                        My Sessions
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        View your photography sessions
+                      </p>
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </NavigationMenuContent>
+          </NavigationMenuItem>
+        )}
       </NavigationMenuList>
     </NavigationMenu>
   );

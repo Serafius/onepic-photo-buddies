@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { LocationFilter } from "@/components/LocationFilter";
 
 interface PortfolioImage {
   id: string;
@@ -22,6 +23,7 @@ export const CategoryPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
+  const [selectedLocation, setSelectedLocation] = useState("All Locations");
   const loader = useRef(null);
 
   const loadImages = useCallback(async () => {
@@ -33,7 +35,7 @@ export const CategoryPage = () => {
       const to = from + ITEMS_PER_PAGE - 1;
 
       // Query portfolio images filtered by category and join with photographers table
-      const { data, error } = await supabase
+      let query = supabase
         .from('portfolio_images')
         .select(`
           id,
@@ -41,11 +43,18 @@ export const CategoryPage = () => {
           title,
           description,
           photographer:photographers (
-            name
+            name,
+            location
           )
         `)
-        .eq('category_name', category?.toLowerCase()) // Filter by category
-        .range(from, to);
+        .eq('category_name', category?.toLowerCase()); // Filter by category
+
+      // Add location filter if not "All Locations"
+      if (selectedLocation !== "All Locations") {
+        query = query.eq('photographer.location', selectedLocation);
+      }
+
+      const { data, error } = await query.range(from, to);
 
       if (error) throw error;
 
@@ -69,7 +78,7 @@ export const CategoryPage = () => {
     setPage(0);
     setHasMore(true);
     loadImages();
-  }, [category]);
+  }, [category, selectedLocation]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -90,7 +99,13 @@ export const CategoryPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-8 capitalize">{category} Photography</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-4xl font-bold capitalize">{category} Photography</h1>
+        <LocationFilter 
+          selectedLocation={selectedLocation}
+          onLocationChange={setSelectedLocation}
+        />
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {images.map((image) => (
           <Card key={image.id} className="overflow-hidden group">

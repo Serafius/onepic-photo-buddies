@@ -32,8 +32,31 @@ export const BrowsingGrid = () => {
 
   useEffect(() => {
     fetchPhotos();
+    fetchUserLikes();
     console.log("Current category:", category);
   }, [category]);
+
+  const fetchUserLikes = async () => {
+    const authData = localStorage.getItem('authData');
+    if (!authData) return;
+
+    const { userId } = JSON.parse(authData);
+    
+    try {
+      const { data, error } = await supabase
+        .from('user_likes')
+        .select('image_id')
+        .eq('user_id', userId);
+
+      if (error) throw error;
+      
+      if (data) {
+        setLikedPhotos(data.map(like => like.image_id));
+      }
+    } catch (error) {
+      console.error('Error fetching user likes:', error);
+    }
+  };
 
   const fetchPhotos = async () => {
     try {
@@ -100,13 +123,53 @@ export const BrowsingGrid = () => {
     }
   };
 
-  const handleLike = (photoId: string) => {
-    setLikedPhotos(prev => {
-      if (prev.includes(photoId)) {
-        return prev.filter(id => id !== photoId);
+  const handleLike = async (photoId: string) => {
+    const authData = localStorage.getItem('authData');
+    if (!authData) {
+      toast({
+        title: "Error",
+        description: "Please sign in to like photos",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const { userId } = JSON.parse(authData);
+    
+    try {
+      if (likedPhotos.includes(photoId)) {
+        // Remove like
+        await supabase
+          .from('user_likes')
+          .delete()
+          .eq('user_id', userId)
+          .eq('image_id', photoId);
+        
+        setLikedPhotos(prev => prev.filter(id => id !== photoId));
+      } else {
+        // Add like
+        await supabase
+          .from('user_likes')
+          .insert({
+            user_id: userId,
+            image_id: photoId
+          });
+        
+        setLikedPhotos(prev => [...prev, photoId]);
       }
-      return [...prev, photoId];
-    });
+      
+      toast({
+        title: "Success",
+        description: likedPhotos.includes(photoId) ? "Photo unliked" : "Photo liked",
+      });
+    } catch (error) {
+      console.error('Error handling like:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update like status",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCommentClick = (photoId: string) => {
