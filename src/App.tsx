@@ -12,6 +12,7 @@ import { FeaturedPhotographers } from "@/pages/featured";
 import { ClientSessions } from "@/pages/ClientSessions";
 import { PhotographerBookings } from "@/pages/PhotographerBookings";
 import { ManagePortfolio } from "@/pages/ManagePortfolio";
+import { PortfolioPosts } from "@/pages/PortfolioPosts";
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
           <Route path="/client/sessions" element={<ClientSessions />} />
           <Route path="/photographer/bookings" element={<PhotographerBookings />} />
           <Route path="/photographer/:id/portfolio" element={<ManagePortfolio />} />
+          <Route path="/photographer/:id/posts" element={<PortfolioPosts />} />
         </Routes>
         <Toaster />
       </Layout>

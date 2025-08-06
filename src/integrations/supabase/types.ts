@@ -296,6 +296,80 @@ export type Database = {
           },
         ]
       }
+      portfolio_posts: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_featured: boolean | null
+          likes_count: number | null
+          location: string | null
+          photographer_id: number
+          title: string
+          updated_at: string
+          views_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_featured?: boolean | null
+          likes_count?: number | null
+          location?: string | null
+          photographer_id: number
+          title: string
+          updated_at?: string
+          views_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_featured?: boolean | null
+          likes_count?: number | null
+          location?: string | null
+          photographer_id?: number
+          title?: string
+          updated_at?: string
+          views_count?: number | null
+        }
+        Relationships: []
+      }
+      post_images: {
+        Row: {
+          alt_text: string | null
+          created_at: string
+          id: string
+          image_url: string
+          order_index: number | null
+          post_id: string | null
+        }
+        Insert: {
+          alt_text?: string | null
+          created_at?: string
+          id?: string
+          image_url: string
+          order_index?: number | null
+          post_id?: string | null
+        }
+        Update: {
+          alt_text?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string
+          order_index?: number | null
+          post_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_images_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "portfolio_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       Posts: {
         Row: {
           id: number

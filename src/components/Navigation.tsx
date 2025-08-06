@@ -184,6 +184,14 @@ export const Navigation = () => {
                         Upload and organize your portfolio images
                       </p>
                     </Link>
+                    <Link to="/photographer/1/posts" className="block group">
+                      <div className="font-medium mb-1 group-hover:text-primary transition-colors">
+                        Portfolio Posts
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        Create and manage portfolio posts with multiple images
+                      </p>
+                    </Link>
                   </div>
                 ) : (
                   <div className="space-y-2">
