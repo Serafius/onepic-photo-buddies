@@ -304,7 +304,7 @@ export type Database = {
           is_featured: boolean | null
           likes_count: number | null
           location: string | null
-          photographer_id: number
+          photographer_id: string
           title: string
           updated_at: string
           views_count: number | null
@@ -316,7 +316,7 @@ export type Database = {
           is_featured?: boolean | null
           likes_count?: number | null
           location?: string | null
-          photographer_id: number
+          photographer_id: string
           title: string
           updated_at?: string
           views_count?: number | null
@@ -328,12 +328,20 @@ export type Database = {
           is_featured?: boolean | null
           likes_count?: number | null
           location?: string | null
-          photographer_id?: number
+          photographer_id?: string
           title?: string
           updated_at?: string
           views_count?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_posts_photographer_id_fkey"
+            columns: ["photographer_id"]
+            isOneToOne: false
+            referencedRelation: "photographers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       post_images: {
         Row: {

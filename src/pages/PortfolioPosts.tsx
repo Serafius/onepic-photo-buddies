@@ -40,16 +40,13 @@ interface PostImage {
 }
 
 interface Photographer {
-  id: number;
+  id: string;
   name: string;
-  profession: string | null;
+  specialty: string | null;
   location: string | null;
 }
 
 export const PortfolioPosts = () => {
-  const { id } = useParams<{ id: string }>();
-  const photographerId = parseInt(id || "1");
-  
   const [photographer, setPhotographer] = useState<Photographer | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [postImages, setPostImages] = useState<{ [postId: string]: PostImage[] }>({});
@@ -65,18 +62,26 @@ export const PortfolioPosts = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (photographerId) {
-      fetchPhotographerData();
-      fetchPosts();
-    }
-  }, [photographerId]);
+    fetchPhotographerData();
+    fetchPosts();
+  }, []);
 
   const fetchPhotographerData = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to view this page",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { data, error } = await supabase
-        .from('Photographers')
+        .from('photographers')
         .select('*')
-        .eq('id', photographerId)
+        .eq('user_id', user.id)
         .single();
 
       if (error) throw error;
@@ -93,10 +98,21 @@ export const PortfolioPosts = () => {
 
   const fetchPosts = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: photographer } = await supabase
+        .from('photographers')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!photographer) return;
+
       const { data: postsData, error: postsError } = await supabase
         .from('portfolio_posts')
         .select('*')
-        .eq('photographer_id', photographerId)
+        .eq('photographer_id', photographer.id)
         .order('created_at', { ascending: false });
 
       if (postsError) throw postsError;
@@ -163,11 +179,36 @@ export const PortfolioPosts = () => {
 
     setIsUploading(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to create posts",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { data: photographer } = await supabase
+        .from('photographers')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!photographer) {
+        toast({
+          title: "Error", 
+          description: "Photographer profile not found",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Create the post first
       const { data: postData, error: postError } = await supabase
         .from('portfolio_posts')
         .insert({
-          photographer_id: photographerId,
+          photographer_id: photographer.id,
           title: newPostTitle,
           description: newPostDescription || null,
           location: newPostLocation || null,
@@ -274,9 +315,9 @@ export const PortfolioPosts = () => {
           <p className="text-muted-foreground">
             {photographer.name} • {photographer.location}
           </p>
-          {photographer.profession && (
+          {photographer.specialty && (
             <Badge variant="secondary" className="mt-2">
-              {photographer.profession}
+              {photographer.specialty}
             </Badge>
           )}
         </div>
