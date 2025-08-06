@@ -33,16 +33,14 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
   const { toast } = useToast();
 
   useEffect(() => {
-    if (photographerId) {
-      fetchCategories();
-      fetchPortfolioImages();
-    }
-  }, [photographerId]);
+    fetchCategories();
+    fetchPortfolioImages();
+  }, []);
 
   const fetchCategories = async () => {
     try {
-      // For now, use a mock photographer ID until auth is implemented
-      const mockPhotographerId = "01940d95-2c69-7dac-abd2-05a7b7b1ba47"; // Mock UUID
+      // Using the actual photographer ID that exists in the database
+      const mockPhotographerId = "f47ac10b-58cc-4372-a567-0e02b2c3d479";
       
       const { data, error } = await supabase
         .from('photographer_categories')
@@ -63,8 +61,8 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
 
   const fetchPortfolioImages = async () => {
     try {
-      // For now, use a mock photographer ID until auth is implemented
-      const mockPhotographerId = "01940d95-2c69-7dac-abd2-05a7b7b1ba47"; // Mock UUID
+      // Using the actual photographer ID that exists in the database
+      const mockPhotographerId = "f47ac10b-58cc-4372-a567-0e02b2c3d479";
       
       const { data, error } = await supabase
         .from('portfolio_images')
@@ -95,21 +93,28 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
 
     setIsUploading(true);
     try {
-      // For now, use a mock photographer ID until auth is implemented
-      const mockPhotographerId = "01940d95-2c69-7dac-abd2-05a7b7b1ba47"; // Mock UUID
+      // Using the actual photographer ID that exists in the database
+      const mockPhotographerId = "f47ac10b-58cc-4372-a567-0e02b2c3d479";
 
       const fileExt = imageFile.name.split('.').pop();
       const filePath = `${mockPhotographerId}/${crypto.randomUUID()}.${fileExt}`;
 
+      console.log('Uploading to storage path:', filePath);
+      
       const { error: uploadError } = await supabase.storage
         .from('portfolio')
         .upload(filePath, imageFile);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw uploadError;
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from('portfolio')
         .getPublicUrl(filePath);
+
+      console.log('Inserting to database with photographer_id:', mockPhotographerId);
 
       const { error: dbError } = await supabase
         .from('portfolio_images')
@@ -120,7 +125,10 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
           description: imageDescription || null
         });
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        console.error('Database insert error:', dbError);
+        throw dbError;
+      }
 
       toast({
         title: "Success",
@@ -135,7 +143,7 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
       console.error('Error uploading image:', error);
       toast({
         title: "Error",
-        description: "Failed to upload image",
+        description: `Failed to upload image: ${error.message}`,
         variant: "destructive",
       });
     } finally {

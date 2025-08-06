@@ -68,9 +68,9 @@ export const PortfolioPosts = () => {
 
   const fetchPhotographerData = async () => {
     try {
-      // For now, use a mock photographer until auth is implemented
+      // Using the actual photographer ID that exists in the database
       const mockPhotographer = {
-        id: "01940d95-2c69-7dac-abd2-05a7b7b1ba47",
+        id: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
         name: "Test Photographer",
         specialty: "Portrait Photography",
         location: "New York, NY"
@@ -89,8 +89,8 @@ export const PortfolioPosts = () => {
 
   const fetchPosts = async () => {
     try {
-      // For now, use a mock photographer ID until auth is implemented
-      const mockPhotographerId = "01940d95-2c69-7dac-abd2-05a7b7b1ba47";
+      // Using the actual photographer ID that exists in the database
+      const mockPhotographerId = "f47ac10b-58cc-4372-a567-0e02b2c3d479";
 
       const { data: postsData, error: postsError } = await supabase
         .from('portfolio_posts')
@@ -162,8 +162,10 @@ export const PortfolioPosts = () => {
 
     setIsUploading(true);
     try {
-      // For now, use a mock photographer ID until auth is implemented
-      const mockPhotographerId = "01940d95-2c69-7dac-abd2-05a7b7b1ba47";
+      // Using the actual photographer ID that exists in the database
+      const mockPhotographerId = "f47ac10b-58cc-4372-a567-0e02b2c3d479";
+
+      console.log('Creating post for photographer:', mockPhotographerId);
 
       // Create the post first
       const { data: postData, error: postError } = await supabase
@@ -177,18 +179,26 @@ export const PortfolioPosts = () => {
         .select()
         .single();
 
-      if (postError) throw postError;
+      if (postError) {
+        console.error('Post creation error:', postError);
+        throw postError;
+      }
 
       // Upload images and create post_images records
       const imageUploadPromises = selectedImages.map(async (file, index) => {
         const fileExt = file.name.split('.').pop();
         const filePath = `posts/${postData.id}/${crypto.randomUUID()}.${fileExt}`;
 
+        console.log('Uploading image to:', filePath);
+
         const { error: uploadError } = await supabase.storage
           .from('portfolio')
           .upload(filePath, file);
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error('Image upload error:', uploadError);
+          throw uploadError;
+        }
 
         const { data: { publicUrl } } = supabase.storage
           .from('portfolio')
@@ -203,7 +213,10 @@ export const PortfolioPosts = () => {
             alt_text: newPostTitle
           });
 
-        if (imageError) throw imageError;
+        if (imageError) {
+          console.error('Image record creation error:', imageError);
+          throw imageError;
+        }
       });
 
       await Promise.all(imageUploadPromises);
@@ -226,7 +239,7 @@ export const PortfolioPosts = () => {
       console.error('Error creating post:', error);
       toast({
         title: "Error",
-        description: "Failed to create portfolio post",
+        description: `Failed to create portfolio post: ${error.message}`,
         variant: "destructive",
       });
     } finally {
