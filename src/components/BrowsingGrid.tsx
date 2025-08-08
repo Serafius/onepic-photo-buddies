@@ -274,6 +274,35 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
         const a = JSON.parse(authRaw);
         if (a.displayName) name = a.displayName;
         if (a.avatarUrl) avatar = a.avatarUrl;
+
+        // Fallback: fetch from legacy tables if values are missing
+        if ((!a.displayName || !a.avatarUrl) && a.userId) {
+          try {
+            if (a.isPhotographer) {
+              const { data: p } = await supabase
+                .from('Photographers')
+                .select('name, profile_picture_url')
+                .eq('id', parseInt(a.userId))
+                .maybeSingle();
+              if (p) {
+                if ((p as any).name) name = (p as any).name;
+                if ((p as any).profile_picture_url) avatar = (p as any).profile_picture_url;
+              }
+            } else {
+              const { data: c } = await supabase
+                .from('Clients')
+                .select('name, id')
+                .eq('id', parseInt(a.userId))
+                .maybeSingle();
+              if (c) {
+                if ((c as any).name) name = (c as any).name;
+                avatar = `https://i.pravatar.cc/150?u=${(c as any).id}`;
+              }
+            }
+          } catch (e) {
+            console.warn('Profile fallback fetch failed:', e);
+          }
+        }
       }
     } catch {}
 
