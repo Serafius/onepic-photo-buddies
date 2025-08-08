@@ -575,6 +575,7 @@ export type Database = {
           photographer_id: string | null
           photographer_int_id: number | null
           photographer_name: string | null
+          photographer_profile_url: string | null
           title: string | null
         }
         Relationships: [
