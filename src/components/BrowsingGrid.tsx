@@ -242,21 +242,28 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
             key={photo.id} 
             className="overflow-hidden hover:shadow-lg transition-all duration-300"
           >
-            <div className="p-4">
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
-                  <img
-                    src={photo.photographer_profile_url || '/placeholder.svg'}
-                    alt={photo.photographer_name || 'Photographer profile'}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div>
-                  <h3 className="font-medium">{photo.photographer_name || 'Unknown Photographer'}</h3>
-                  <span className="text-sm text-gray-500 capitalize">{(photo.category_name || 'uncategorized')}</span>
+{(photo.photographer_name || photo.photographer_profile_url) && (
+              <div className="p-4">
+                <div className="flex items-center space-x-3 mb-4">
+                  {photo.photographer_profile_url && (
+                    <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
+                      <img
+                        src={photo.photographer_profile_url}
+                        alt={photo.photographer_name || 'Photographer profile'}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
+                  <div>
+                    {photo.photographer_name && (
+                      <h3 className="font-medium">{photo.photographer_name}</h3>
+                    )}
+                    <span className="text-sm text-gray-500 capitalize">{(photo.category_name || 'uncategorized')}</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
             <div className="aspect-square relative">
               <img
                 src={photo.image_url}
@@ -291,7 +298,11 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
                 </button>
               </div>
               <p className="text-gray-600">
-                <span className="font-medium text-gray-900">{photo.photographer_name || 'Unknown Photographer'}</span>{" "}
+                {photo.photographer_name && (
+                  <>
+                    <span className="font-medium text-gray-900">{photo.photographer_name}</span>{" "}
+                  </>
+                )}
                 {photo.description}
               </p>
               
