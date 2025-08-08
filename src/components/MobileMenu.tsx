@@ -10,7 +10,7 @@ interface MobileMenuProps {
   isAuthenticated: boolean;
   isPhotographer: boolean;
   userId: string;
-  onSignIn: (isPhotographer: boolean, userId: string) => void;
+  onSignIn: (isPhotographer: boolean, userId: string, displayName?: string, avatarUrl?: string) => void;
   onSignOut: () => void;
 }
 

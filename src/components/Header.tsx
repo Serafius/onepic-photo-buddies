@@ -26,13 +26,13 @@ export const Header = () => {
     }
   }, []);
 
-  const handleSignIn = async (isPhotographer: boolean, userId: string) => {
+  const handleSignIn = async (isPhotographer: boolean, userId: string, displayName?: string, avatarUrl?: string) => {
     setIsAuthenticated(true);
     setIsPhotographer(isPhotographer);
     setUserId(userId);
     
     // Store auth state in localStorage
-    localStorage.setItem('authUser', JSON.stringify({ isPhotographer, userId }));
+    localStorage.setItem('authUser', JSON.stringify({ isPhotographer, userId, displayName, avatarUrl }));
   };
 
   const handleSignOut = async () => {

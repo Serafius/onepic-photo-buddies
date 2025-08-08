@@ -45,6 +45,7 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
   const [commentsByPhoto, setCommentsByPhoto] = useState<Record<string, ImageComment[]>>({});
   const [commentLikesCount, setCommentLikesCount] = useState<Record<string, number>>({});
   const [commentLikedByVisitor, setCommentLikedByVisitor] = useState<string[]>([]);
+  const [commentCountByPhoto, setCommentCountByPhoto] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const id = getOrCreateVisitorId();

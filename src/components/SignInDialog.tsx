@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 
 interface SignInDialogProps {
-  onSignIn: (isPhotographer: boolean, userId: string) => void;
+  onSignIn: (isPhotographer: boolean, userId: string, displayName?: string, avatarUrl?: string) => void;
 }
 
 export const SignInDialog = ({ onSignIn }: SignInDialogProps) => {
@@ -47,7 +47,12 @@ export const SignInDialog = ({ onSignIn }: SignInDialogProps) => {
 
       if (photographerData && !photographerError) {
         // Found photographer
-        onSignIn(true, photographerData.id.toString());
+        onSignIn(
+          true,
+          photographerData.id.toString(),
+          photographerData.name,
+          photographerData.profile_picture_url || undefined
+        );
         setIsSignInOpen(false);
         setEmail("");
         setPassword("");
@@ -69,7 +74,12 @@ export const SignInDialog = ({ onSignIn }: SignInDialogProps) => {
 
       if (clientData && !clientError) {
         // Found client
-        onSignIn(false, clientData.id.toString());
+        onSignIn(
+          false,
+          clientData.id.toString(),
+          clientData.name,
+          `https://i.pravatar.cc/150?u=${clientData.id}`
+        );
         setIsSignInOpen(false);
         setEmail("");
         setPassword("");
