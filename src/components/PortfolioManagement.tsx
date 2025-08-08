@@ -66,8 +66,8 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
       
       const { data, error } = await supabase
         .from('portfolio_images')
-        .select('*')
-        .eq('photographer_id', photographerId)
+        .select('id, image_url, title, description, photographer_id, created_at')
+        .or(`photographer_id.eq.${photographerId},image_url.ilike.%/${photographerId}/%`)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
