@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams } from "react-router-dom";
-
+import { getOrCreateVisitorId } from "@/utils/visitor";
 interface Photo {
   id: string;
   image_url: string;
@@ -20,49 +20,84 @@ interface Photo {
   photographer_profile_url: string | null;
 }
 
+interface ImageComment {
+  id: string;
+  image_id: string;
+  author_user_id: string | null;
+  author_name: string;
+  author_avatar_url: string | null;
+  text: string;
+  created_at: string;
+}
+
 const categoryOrder = ["events", "portraits", "food", "weddings"];
 
 export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) => {
   const { category } = useParams();
   const { toast } = useToast();
   const [likedPhotos, setLikedPhotos] = useState<string[]>([]);
+  const [likesCountByPhoto, setLikesCountByPhoto] = useState<Record<string, number>>({});
   const [photoData, setPhotoData] = useState<Photo[]>([]);
   const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
   const [commentText, setCommentText] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [authUserId, setAuthUserId] = useState<string | null>(null);
+  const [visitorId, setVisitorId] = useState<string | null>(null);
+  const [commentsByPhoto, setCommentsByPhoto] = useState<Record<string, ImageComment[]>>({});
+  const [commentLikesCount, setCommentLikesCount] = useState<Record<string, number>>({});
+  const [commentLikedByVisitor, setCommentLikedByVisitor] = useState<string[]>([]);
 
   useEffect(() => {
-    // Get user ID from localStorage 
-    const authData = localStorage.getItem('authData');
-    if (authData) {
-      const { userId } = JSON.parse(authData);
-      setAuthUserId(userId);
-    }
-    
+    const id = getOrCreateVisitorId();
+    setVisitorId(id);
     fetchPhotos();
-    if (authUserId) {
-      fetchUserLikes();
-    }
     console.log("Current category:", category);
-  }, [category, authUserId, photographerId]);
+  }, [category, photographerId]);
+
+  useEffect(() => {
+    if (!visitorId) return;
+    fetchUserLikes();
+  }, [visitorId]);
+
+  useEffect(() => {
+    if (photoData.length === 0) return;
+    const ids = photoData.map((p) => p.id);
+    fetchLikesCounts(ids);
+  }, [photoData]);
 
   const fetchUserLikes = async () => {
-    if (!authUserId) return;
+    if (!visitorId) return;
 
     try {
       const { data, error } = await supabase
         .from('user_likes')
         .select('image_id')
-        .eq('user_id', authUserId);
+        .eq('user_id', visitorId);
 
       if (error) throw error;
-      
-      if (data) {
-        setLikedPhotos(data.map(like => like.image_id));
-      }
+
+      setLikedPhotos((data || []).map((like) => like.image_id));
     } catch (error) {
       console.error('Error fetching user likes:', error);
+    }
+  };
+
+  const fetchLikesCounts = async (imageIds: string[]) => {
+    try {
+      if (imageIds.length === 0) return;
+      const { data, error } = await supabase
+        .from('user_likes')
+        .select('image_id')
+        .in('image_id', imageIds);
+
+      if (error) throw error;
+
+      const counts: Record<string, number> = {};
+      (data || []).forEach((row: any) => {
+        counts[row.image_id] = (counts[row.image_id] || 0) + 1;
+      });
+      setLikesCountByPhoto(counts);
+    } catch (err) {
+      console.error('Error fetching like counts:', err);
     }
   };
 
@@ -147,43 +182,33 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
   };
 
   const handleLike = async (photoId: string) => {
-    if (!authUserId) {
-      toast({
-        title: "Error",
-        description: "Please sign in to like photos",
-        variant: "destructive",
-      });
-      return;
-    }
-    
+    if (!visitorId) return;
+
     try {
-      if (likedPhotos.includes(photoId)) {
-        // Remove like
+      const alreadyLiked = likedPhotos.includes(photoId);
+
+      // Optimistic updates
+      setLikedPhotos((prev) =>
+        alreadyLiked ? prev.filter((id) => id !== photoId) : [...prev, photoId]
+      );
+      setLikesCountByPhoto((prev) => ({
+        ...prev,
+        [photoId]: Math.max(0, (prev[photoId] || 0) + (alreadyLiked ? -1 : 1)),
+      }));
+
+      if (alreadyLiked) {
         await supabase
           .from('user_likes')
           .delete()
-          .eq('user_id', authUserId)
+          .eq('user_id', visitorId)
           .eq('image_id', photoId);
-        
-        setLikedPhotos(prev => prev.filter(id => id !== photoId));
-        toast({
-          title: "Success",
-          description: "Photo unliked",
-        });
       } else {
-        // Add like
         await supabase
           .from('user_likes')
           .insert({
-            user_id: authUserId,
-            image_id: photoId
+            user_id: visitorId,
+            image_id: photoId,
           });
-        
-        setLikedPhotos(prev => [...prev, photoId]);
-        toast({
-          title: "Success", 
-          description: "Photo liked",
-        });
       }
     } catch (error) {
       console.error('Error handling like:', error);
@@ -192,16 +217,24 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
         description: "Failed to update like status",
         variant: "destructive",
       });
+      // Re-sync to ensure consistency
+      fetchUserLikes();
+      fetchLikesCounts([photoId]);
     }
   };
 
   const handleCommentClick = (photoId: string) => {
-    setActiveCommentId(activeCommentId === photoId ? null : photoId);
+    const opening = activeCommentId !== photoId;
+    setActiveCommentId(opening ? photoId : null);
     setCommentText("");
+    if (opening && !commentsByPhoto[photoId]) {
+      loadCommentsForPhoto(photoId);
+    }
   };
 
-  const handleSubmitComment = (photoId: string) => {
-    if (!commentText.trim()) {
+  const handleSubmitComment = async (photoId: string) => {
+    const text = commentText.trim();
+    if (!text) {
       toast({
         title: "Error",
         description: "Please enter a comment",
@@ -210,12 +243,108 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
       return;
     }
 
-    toast({
-      title: "Success",
-      description: "Comment added successfully",
-    });
+    const uid = visitorId || getOrCreateVisitorId();
+    const name = "Guest";
+    const avatar = `https://api.dicebear.com/7.x/thumbs/svg?seed=${uid}`;
 
-    setCommentText("");
+    try {
+      const { data, error } = await supabase
+        .from('image_comments')
+        .insert({
+          image_id: photoId,
+          author_user_id: uid,
+          author_name: name,
+          author_avatar_url: avatar,
+          text,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setCommentsByPhoto((prev) => ({
+        ...prev,
+        [photoId]: [...(prev[photoId] || []), data as unknown as ImageComment],
+      }));
+      setCommentText("");
+      toast({
+        title: "Success",
+        description: "Comment added successfully",
+      });
+    } catch (err) {
+      console.error('Error adding comment:', err);
+      toast({
+        title: "Error",
+        description: "Failed to add comment",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const loadCommentsForPhoto = async (photoId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('image_comments')
+        .select('*')
+        .eq('image_id', photoId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      const comments = (data || []) as unknown as ImageComment[];
+      setCommentsByPhoto((prev) => ({ ...prev, [photoId]: comments }));
+
+      const ids = comments.map((c) => c.id);
+      if (ids.length > 0) {
+        const { data: likesData, error: likesError } = await supabase
+          .from('comment_likes')
+          .select('comment_id, user_id')
+          .in('comment_id', ids);
+
+        if (likesError) throw likesError;
+
+        const counts: Record<string, number> = {};
+        const likedByVisitor: string[] = [];
+        (likesData || []).forEach((row: any) => {
+          counts[row.comment_id] = (counts[row.comment_id] || 0) + 1;
+          if (row.user_id === visitorId) likedByVisitor.push(row.comment_id);
+        });
+        setCommentLikesCount((prev) => ({ ...prev, ...counts }));
+        setCommentLikedByVisitor((prev) => Array.from(new Set([...prev, ...likedByVisitor])));
+      }
+    } catch (err) {
+      console.error('Error loading comments:', err);
+    }
+  };
+
+  const toggleCommentLike = async (commentId: string) => {
+    const uid = visitorId || getOrCreateVisitorId();
+    const already = commentLikedByVisitor.includes(commentId);
+
+    setCommentLikedByVisitor((prev) =>
+      already ? prev.filter((id) => id !== commentId) : [...prev, commentId]
+    );
+    setCommentLikesCount((prev) => ({
+      ...prev,
+      [commentId]: Math.max(0, (prev[commentId] || 0) + (already ? -1 : 1)),
+    }));
+
+    try {
+      if (already) {
+        await supabase
+          .from('comment_likes')
+          .delete()
+          .eq('comment_id', commentId)
+          .eq('user_id', uid);
+      } else {
+        await supabase.from('comment_likes').insert({
+          comment_id: commentId,
+          user_id: uid,
+        });
+      }
+    } catch (err) {
+      console.error('Error toggling comment like:', err);
+    }
   };
 
   if (isLoading) {
@@ -314,25 +443,54 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
                 )}
                 {photo.description}
               </p>
-              
-              {activeCommentId === photo.id && (
-                <div className="flex gap-2 mt-2">
-                  <Input
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                    placeholder="Add a comment..."
-                    className="flex-1"
-                  />
-                  <Button 
-                    onClick={() => handleSubmitComment(photo.id)}
-                    size="sm"
-                    className="flex items-center gap-1"
-                  >
-                    <Send className="w-4 h-4" />
-                    Send
-                  </Button>
-                </div>
-              )}
+                {activeCommentId === photo.id && (
+                  <div className="mt-2 space-y-3">
+                    <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
+                      {(commentsByPhoto[photo.id] || []).map((c) => (
+                        <div key={c.id} className="flex items-start gap-3">
+                          <img
+                            src={c.author_avatar_url || '/placeholder.svg'}
+                            alt={`${c.author_name} avatar`}
+                            className="w-8 h-8 rounded-full object-cover"
+                            loading="lazy"
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium">{c.author_name}</span>
+                              <button
+                                onClick={() => toggleCommentLike(c.id)}
+                                className={`flex items-center gap-1 text-xs ${
+                                  commentLikedByVisitor.includes(c.id) ? "text-red-500" : "text-gray-500"
+                                }`}
+                                aria-label="Like comment"
+                              >
+                                <Heart className={`w-4 h-4 ${commentLikedByVisitor.includes(c.id) ? 'fill-current' : ''}`} />
+                                <span>{commentLikesCount[c.id] || 0}</span>
+                              </button>
+                            </div>
+                            <p className="text-sm text-gray-700">{c.text}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        value={commentText}
+                        onChange={(e) => setCommentText(e.target.value)}
+                        placeholder="Add a comment..."
+                        className="flex-1"
+                      />
+                      <Button 
+                        onClick={() => handleSubmitComment(photo.id)}
+                        size="sm"
+                        className="flex items-center gap-1"
+                      >
+                        <Send className="w-4 h-4" />
+                        Send
+                      </Button>
+                    </div>
+                  </div>
+                )}
             </div>
           </Card>
         ))}
