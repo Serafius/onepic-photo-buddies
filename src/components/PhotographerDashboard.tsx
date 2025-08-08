@@ -17,6 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "lucide-react";
 import { PortfolioManagement } from "./PortfolioManagement";
+import { getPhotographerUuidFromRouteId } from "@/utils/photographerIdMapping";
 
 interface BookingRequest {
   id: string;
@@ -32,7 +33,11 @@ interface Props {
 
 export const PhotographerDashboard = ({ photographerId: propPhotographerId }: Props = {}) => {
   const { id } = useParams<{ id: string }>();
-  const photographerId = propPhotographerId || id || "1";
+  const routeParam = propPhotographerId || id || "1";
+  const photographerUuid = /^[0-9a-fA-F-]{36}$/.test(routeParam)
+    ? routeParam
+    : getPhotographerUuidFromRouteId(routeParam) || null;
+  const photographerNumericId = /^\d+$/.test(routeParam) ? parseInt(routeParam) : null;
   const [hourlyRate, setHourlyRate] = useState("");
   const [location, setLocation] = useState("");
   const [bio, setBio] = useState("");
@@ -49,14 +54,18 @@ export const PhotographerDashboard = ({ photographerId: propPhotographerId }: Pr
   useEffect(() => {
     fetchPhotographerData();
     fetchBookingRequests();
-  }, [photographerId]);
+  }, [routeParam, photographerUuid]);
 
   const fetchPhotographerData = async () => {
     try {
+      if (!photographerNumericId) {
+        console.warn('No numeric photographer ID; skipping legacy Photographers fetch.');
+        return;
+      }
       const { data, error } = await supabase
         .from('Photographers')
         .select('*')
-        .eq('id', parseInt(photographerId))
+        .eq('id', photographerNumericId)
         .single();
 
       if (error) throw error;
@@ -82,10 +91,11 @@ export const PhotographerDashboard = ({ photographerId: propPhotographerId }: Pr
 
   const fetchBookingRequests = async () => {
     try {
+      if (!photographerUuid) return;
       const { data, error } = await supabase
         .from('booking_requests')
         .select('*')
-        .eq('photographer_id', photographerId);
+        .eq('photographer_id', photographerUuid);
 
       if (error) throw error;
 
@@ -111,6 +121,10 @@ export const PhotographerDashboard = ({ photographerId: propPhotographerId }: Pr
 
   const updateProfile = async () => {
     try {
+      if (!photographerNumericId) {
+        toast({ title: "Error", description: "Invalid photographer ID", variant: "destructive" });
+        return;
+      }
       const { error } = await supabase
         .from('Photographers')
         .update({
@@ -119,7 +133,7 @@ export const PhotographerDashboard = ({ photographerId: propPhotographerId }: Pr
           bio,
           profession: specialty
         })
-        .eq('id', parseInt(photographerId));
+        .eq('id', photographerNumericId);
 
       if (error) throw error;
 
@@ -149,7 +163,7 @@ export const PhotographerDashboard = ({ photographerId: propPhotographerId }: Pr
 
     try {
       const fileExt = profilePictureFile.name.split('.').pop();
-      const filePath = `profiles/${photographerId}.${fileExt}`;
+      const filePath = `profiles/${(photographerNumericId ?? routeParam)}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('portfolio')
@@ -161,10 +175,15 @@ export const PhotographerDashboard = ({ photographerId: propPhotographerId }: Pr
         .from('portfolio')
         .getPublicUrl(filePath);
 
+      if (!photographerNumericId) {
+        toast({ title: "Error", description: "Invalid photographer ID", variant: "destructive" });
+        return;
+      }
+
       const { error: dbError } = await supabase
         .from('Photographers')
         .update({ profile_picture_url: publicUrl })
-        .eq('id', parseInt(photographerId));
+        .eq('id', photographerNumericId);
 
       if (dbError) throw dbError;
 
@@ -196,8 +215,12 @@ export const PhotographerDashboard = ({ photographerId: propPhotographerId }: Pr
     }
 
     try {
+      if (!photographerUuid) {
+        toast({ title: "Error", description: "Invalid photographer ID", variant: "destructive" });
+        return;
+      }
       const fileExt = imageFile.name.split('.').pop();
-      const filePath = `${photographerId}/${crypto.randomUUID()}.${fileExt}`;
+      const filePath = `${photographerUuid}/${crypto.randomUUID()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('portfolio')
@@ -212,7 +235,7 @@ export const PhotographerDashboard = ({ photographerId: propPhotographerId }: Pr
       const { error: dbError } = await supabase
         .from('portfolio_images')
         .insert({
-          photographer_id: photographerId,
+          photographer_id: photographerUuid,
           image_url: publicUrl,
           title: imageTitle,
           description: imageDescription
@@ -342,7 +365,7 @@ export const PhotographerDashboard = ({ photographerId: propPhotographerId }: Pr
       </Card>
 
       {/* Portfolio Management Section */}
-      <PortfolioManagement photographerId={photographerId} />
+      <PortfolioManagement photographerId={photographerUuid || ""} />
 
       {/* Booking Requests Section */}
       <Card>
