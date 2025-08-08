@@ -7,6 +7,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Package, Image, Camera } from "lucide-react";
 import { BrowsingGrid } from "@/components/BrowsingGrid";
+import { getPhotographerUuidFromRouteId } from "@/utils/photographerIdMapping";
 
 interface PortfolioImage {
   id: string;
@@ -86,6 +87,7 @@ export const PhotographerPortfolio = () => {
   const [message, setMessage] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
+  const photographerUuid = id ? getPhotographerUuidFromRouteId(id as string) : null;
 
   useEffect(() => {
     const fetchPortfolio = async () => {
@@ -99,30 +101,56 @@ export const PhotographerPortfolio = () => {
           return;
         }
 
-        const { data: photographerData, error: photographerError } = await supabase
-          .from("photographers")
-          .select("*")
-          .eq("id", id)
-          .single();
+        if (photographerUuid) {
+          // Primary path: fetch photographer by UUID (new table)
+          const { data: photographerData, error: photographerError } = await supabase
+            .from("photographers")
+            .select("*")
+            .eq("id", photographerUuid)
+            .single();
 
-        if (photographerError) throw photographerError;
-        setPhotographer(photographerData);
+          if (photographerError) throw photographerError;
+          setPhotographer(photographerData as unknown as Photographer);
 
-        const { data: imagesData, error: imagesError } = await supabase
-          .from("portfolio_images")
-          .select("*")
-          .eq("photographer_id", id);
+          // Fetch categories for this photographer
+          const { data: categoriesData, error: categoriesError } = await supabase
+            .from("photographer_categories")
+            .select("*")
+            .eq("photographer_id", photographerUuid);
 
-        if (imagesError) throw imagesError;
-        setImages(imagesData);
+          if (categoriesError) throw categoriesError;
+          setCategories(categoriesData || []);
+        } else {
+          // Fallback: legacy table with integer IDs ("Photographers")
+          const { data: legacyPhotographer, error: legacyError } = await supabase
+            .from("Photographers")
+            .select("*")
+            .eq("id", Number(id))
+            .single();
 
-        const { data: categoriesData, error: categoriesError } = await supabase
-          .from("photographer_categories")
-          .select("*")
-          .eq("photographer_id", id);
+          if (legacyError) throw legacyError;
 
-        if (categoriesError) throw categoriesError;
-        setCategories(categoriesData);
+          const mapped: Photographer = {
+            id: String((legacyPhotographer as any).id),
+            name: (legacyPhotographer as any).name || (legacyPhotographer as any).username || "Photographer",
+            specialty: (legacyPhotographer as any).profession || null,
+            hourly_rate: 0,
+            location:
+              (legacyPhotographer as any).location ||
+              [
+                (legacyPhotographer as any).city,
+                (legacyPhotographer as any).country,
+              ]
+                .filter(Boolean)
+                .join(", ") || null,
+            rating: null,
+            bio: (legacyPhotographer as any).bio || null,
+            image: (legacyPhotographer as any).profile_picture_url || undefined,
+          };
+
+          setPhotographer(mapped);
+          setCategories([]);
+        }
       } catch (error) {
         console.error("Error fetching portfolio:", error);
         toast({
@@ -136,7 +164,7 @@ export const PhotographerPortfolio = () => {
     };
 
     fetchPortfolio();
-  }, [id, toast]);
+  }, [id, photographerUuid, toast]);
 
   const handleBooking = async () => {
     const authData = localStorage.getItem('authData');
@@ -321,7 +349,7 @@ export const PhotographerPortfolio = () => {
           <Image className="w-6 h-6" />
           <h2 className="text-2xl font-semibold">Portfolio Gallery</h2>
         </div>
-        <BrowsingGrid photographerId={id as string} />
+        <BrowsingGrid photographerId={photographerUuid || undefined} />
       </section>
     </div>
   );
