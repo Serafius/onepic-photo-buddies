@@ -114,32 +114,36 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
         .from('portfolio')
         .getPublicUrl(filePath);
 
-      // Fetch photographer name and avatar for author fields
-      const { data: photographer, error: photographerError } = await supabase
-        .from('photographers')
-        .select('name, user_id')
-        .eq('id', photographerId)
-        .single();
-      if (photographerError) {
-        console.warn('Could not fetch photographer for author fields:', photographerError);
-      }
-
-      let authorName = photographer?.name || null;
+      // Resolve author using legacy Photographers table via mapping
+      let authorName: string | null = null;
       let authorAvatarUrl: string | null = null;
 
-      if (photographer?.user_id) {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('avatar_url')
-          .eq('id', photographer.user_id)
-          .single();
-        if (profileError) {
-          console.warn('Could not fetch profile avatar, will fallback to initials:', profileError);
-        }
-        authorAvatarUrl = profile?.avatar_url || null;
+      const { data: mapping, error: mappingError } = await supabase
+        .from('photographer_mappings')
+        .select('new_int')
+        .eq('old_uuid', photographerId)
+        .single();
+      if (mappingError) {
+        console.warn('Could not fetch photographer mapping:', mappingError);
       }
 
-      if (!authorAvatarUrl && authorName) {
+      if (mapping?.new_int != null) {
+        const { data: legacyPhotographer, error: legacyError } = await supabase
+          .from('Photographers')
+          .select('name, profile_picture_url')
+          .eq('id', mapping.new_int)
+          .single();
+        if (legacyError) {
+          console.warn('Could not fetch legacy Photographers row:', legacyError);
+        }
+        authorName = legacyPhotographer?.name || null;
+        authorAvatarUrl = legacyPhotographer?.profile_picture_url || null;
+      }
+
+      if (!authorName) {
+        authorName = 'Photographer';
+      }
+      if (!authorAvatarUrl) {
         authorAvatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(authorName)}`;
       }
 
