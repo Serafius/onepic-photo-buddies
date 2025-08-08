@@ -97,26 +97,33 @@ export const BrowsingGrid = () => {
         console.log('Fetched data:', data);
         
         // Group photos by category
+        // Safely group photos by known categories (ignore null/unknown)
         const photosByCategory: { [key: string]: Photo[] } = {};
+        const categorized: Photo[] = data.filter(photo => {
+          const cat = (photo.category_name || '').toLowerCase();
+          return categoryOrder.includes(cat);
+        });
+        const uncategorized: Photo[] = data.filter(photo => {
+          const cat = (photo.category_name || '').toLowerCase();
+          return !categoryOrder.includes(cat);
+        });
         categoryOrder.forEach(cat => {
-          photosByCategory[cat] = data.filter(
-            photo => photo.category_name.toLowerCase() === cat
-          );
+          photosByCategory[cat] = categorized.filter(photo => (photo.category_name || '').toLowerCase() === cat);
         });
 
-        // Interleave photos from different categories
-        const sortedData: Photo[] = [];
-        let maxLength = Math.max(...Object.values(photosByCategory).map(arr => arr.length));
-        
+        // Interleave photos from different categories, then append the rest
+        const interleaved: Photo[] = [];
+        const maxLength = Math.max(0, ...Object.values(photosByCategory).map(arr => arr.length));
         for (let i = 0; i < maxLength; i++) {
           for (const cat of categoryOrder) {
             if (photosByCategory[cat][i]) {
-              sortedData.push(photosByCategory[cat][i]);
+              interleaved.push(photosByCategory[cat][i]);
             }
           }
         }
 
-        setPhotoData(sortedData);
+        const finalData = interleaved.length ? [...interleaved, ...uncategorized] : data;
+        setPhotoData(finalData);
       }
     } catch (error) {
       console.error('Error fetching photos:', error);
@@ -237,7 +244,7 @@ export const BrowsingGrid = () => {
                 </div>
                 <div>
                   <h3 className="font-medium">{photo.photographer?.name || 'Unknown Photographer'}</h3>
-                  <span className="text-sm text-gray-500 capitalize">{photo.category_name}</span>
+                  <span className="text-sm text-gray-500 capitalize">{(photo.category_name || 'uncategorized')}</span>
                 </div>
               </div>
             </div>
