@@ -12,11 +12,12 @@ interface Photo {
   id: string;
   image_url: string;
   title: string;
-  description: string;
-  photographer: {
-    name: string;
-  };
-  category_name: string;
+  description: string | null;
+  category_name: string | null;
+  photographer_id: string | null;
+  photographer_int_id: number | null;
+  photographer_name: string | null;
+  photographer_profile_url: string | null;
 }
 
 const categoryOrder = ["events", "portraits", "food", "weddings"];
@@ -69,16 +70,18 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
     try {
       setIsLoading(true);
       let query = supabase
-        .from('portfolio_images')
+        .from('v_portfolio_images')
         .select(`
           id,
           image_url,
           title,
           description,
           category_name,
-          photographer:photographers (
-            name
-          )
+          photographer_id,
+          photographer_int_id,
+          photographer_name,
+          photographer_profile_url,
+          created_at
         `)
         .order('created_at', { ascending: false });
 
@@ -86,7 +89,10 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
         query = query.ilike('category_name', `%${category}%`);
       }
       if (photographerId) {
-        query = query.eq('photographer_id', photographerId);
+        const isUuid = photographerId.includes('-');
+        query = isUuid
+          ? query.eq('photographer_id', photographerId)
+          : query.eq('photographer_int_id', Number(photographerId));
       }
 
       const { data, error } = await query;
@@ -240,13 +246,13 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
               <div className="flex items-center space-x-3 mb-4">
                 <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
                   <img
-                    src={photo.image_url}
-                    alt={photo.title}
+                    src={photo.photographer_profile_url || '/placeholder.svg'}
+                    alt={photo.photographer_name || 'Photographer profile'}
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <div>
-                  <h3 className="font-medium">{photo.photographer?.name || 'Unknown Photographer'}</h3>
+                  <h3 className="font-medium">{photo.photographer_name || 'Unknown Photographer'}</h3>
                   <span className="text-sm text-gray-500 capitalize">{(photo.category_name || 'uncategorized')}</span>
                 </div>
               </div>
@@ -285,7 +291,7 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
                 </button>
               </div>
               <p className="text-gray-600">
-                <span className="font-medium text-gray-900">{photo.photographer?.name}</span>{" "}
+                <span className="font-medium text-gray-900">{photo.photographer_name || 'Unknown Photographer'}</span>{" "}
                 {photo.description}
               </p>
               
