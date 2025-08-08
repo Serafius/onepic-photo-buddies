@@ -95,6 +95,35 @@ export type Database = {
         }
         Relationships: []
       }
+      comment_likes: {
+        Row: {
+          comment_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comment_likes_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "image_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       Comments: {
         Row: {
           id: number
@@ -132,6 +161,51 @@ export type Database = {
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "Posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      image_comments: {
+        Row: {
+          author_avatar_url: string | null
+          author_name: string
+          author_user_id: string | null
+          created_at: string
+          id: string
+          image_id: string
+          text: string
+        }
+        Insert: {
+          author_avatar_url?: string | null
+          author_name: string
+          author_user_id?: string | null
+          created_at?: string
+          id?: string
+          image_id: string
+          text: string
+        }
+        Update: {
+          author_avatar_url?: string | null
+          author_name?: string
+          author_user_id?: string | null
+          created_at?: string
+          id?: string
+          image_id?: string
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_image_comments_image"
+            columns: ["image_id"]
+            isOneToOne: false
+            referencedRelation: "portfolio_images"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_image_comments_image"
+            columns: ["image_id"]
+            isOneToOne: false
+            referencedRelation: "v_portfolio_images"
             referencedColumns: ["id"]
           },
         ]
