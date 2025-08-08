@@ -11,13 +11,16 @@ import { getOrCreateVisitorId } from "@/utils/visitor";
 interface Photo {
   id: string;
   image_url: string;
-  title: string;
+  title: string | null;
   description: string | null;
   category_name: string | null;
   photographer_id: string | null;
   photographer_int_id: number | null;
   photographer_name: string | null;
   photographer_profile_url: string | null;
+  created_at: string;
+  likes_count: number;
+  comments_count: number;
 }
 
 interface ImageComment {
@@ -59,12 +62,8 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
     fetchUserLikes();
   }, [visitorId]);
 
-  useEffect(() => {
-    if (photoData.length === 0) return;
-    const ids = photoData.map((p) => p.id);
-    fetchLikesCounts(ids);
-    fetchCommentCounts(ids);
-  }, [photoData]);
+// Persistent counts come from the DB view; no extra fetch needed
+
 
   const fetchUserLikes = async () => {
     if (!visitorId) return;
@@ -126,7 +125,7 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
   const fetchPhotos = async () => {
     try {
       setIsLoading(true);
-      let query = supabase
+      let query = (supabase as any)
         .from('v_portfolio_images')
         .select(`
           id,
@@ -138,7 +137,9 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
           photographer_int_id,
           photographer_name,
           photographer_profile_url,
-          created_at
+          created_at,
+          likes_count,
+          comments_count
         `)
         .order('created_at', { ascending: false });
 
@@ -188,10 +189,13 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
           }
         }
 
-        const finalData = interleaved.length ? [...interleaved, ...uncategorized] : data;
+        const finalData = interleaved.length ? [...interleaved, ...uncategorized] : (data as Photo[]);
         setPhotoData(finalData);
+        // Seed counts from DB persistent fields
+        setLikesCountByPhoto(finalData.reduce((acc, p) => ({ ...acc, [p.id]: p.likes_count || 0 }), {}));
+        setCommentCountByPhoto(finalData.reduce((acc, p) => ({ ...acc, [p.id]: p.comments_count || 0 }), {}));
       }
-    } catch (error) {
+      } catch (error) {
       console.error('Error fetching photos:', error);
       toast({
         title: "Error",
@@ -200,6 +204,22 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const syncCountsForImage = async (photoId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('v_portfolio_images')
+        .select('likes_count, comments_count')
+        .eq('id', photoId)
+        .maybeSingle();
+      if (!error && data) {
+        setLikesCountByPhoto((prev) => ({ ...prev, [photoId]: (data as any).likes_count || 0 }));
+        setCommentCountByPhoto((prev) => ({ ...prev, [photoId]: (data as any).comments_count || 0 }));
+      }
+    } catch (e) {
+      console.warn('Failed to sync counts for image', photoId, e);
     }
   };
 
@@ -232,6 +252,7 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
             image_id: photoId,
           });
       }
+      await syncCountsForImage(photoId);
     } catch (error) {
       console.error('Error handling like:', error);
       toast({
@@ -241,7 +262,7 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
       });
       // Re-sync to ensure consistency
       fetchUserLikes();
-      fetchLikesCounts([photoId]);
+      syncCountsForImage(photoId);
     }
   };
 
@@ -334,6 +355,7 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
         title: "Success",
         description: "Comment added successfully",
       });
+      syncCountsForImage(photoId);
     } catch (err) {
       console.error('Error adding comment:', err);
       toast({
