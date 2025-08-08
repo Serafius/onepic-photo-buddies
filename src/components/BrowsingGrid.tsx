@@ -19,8 +19,6 @@ interface Photo {
   photographer_name: string | null;
   photographer_profile_url: string | null;
   created_at: string;
-  likes_count: number;
-  comments_count: number;
 }
 
 interface ImageComment {
@@ -62,9 +60,11 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
     fetchUserLikes();
   }, [visitorId]);
 
-// Persistent counts come from the DB view; no extra fetch needed
-
-
+  useEffect(() => {
+    if (photoData.length === 0) return;
+    const ids = photoData.map((p) => p.id);
+    fetchLikesCounts(ids);
+  }, [photoData]);
   const fetchUserLikes = async () => {
     if (!visitorId) return;
 
@@ -86,19 +86,22 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
     try {
       if (imageIds.length === 0) return;
       const { data, error } = await supabase
-        .from('user_likes')
-        .select('image_id')
-        .in('image_id', imageIds);
+        .from('portfolio_images')
+        .select('id, likes_count, comments_count')
+        .in('id', imageIds);
 
       if (error) throw error;
 
-      const counts: Record<string, number> = {};
+      const likeMap: Record<string, number> = {};
+      const commentMap: Record<string, number> = {};
       (data || []).forEach((row: any) => {
-        counts[row.image_id] = (counts[row.image_id] || 0) + 1;
+        likeMap[row.id] = row.likes_count || 0;
+        commentMap[row.id] = row.comments_count || 0;
       });
-      setLikesCountByPhoto(counts);
+      setLikesCountByPhoto(likeMap);
+      setCommentCountByPhoto(commentMap);
     } catch (err) {
-      console.error('Error fetching like counts:', err);
+      console.error('Error fetching persisted counts:', err);
     }
   };
 
@@ -125,7 +128,7 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
   const fetchPhotos = async () => {
     try {
       setIsLoading(true);
-      let query = (supabase as any)
+      let query = supabase
         .from('v_portfolio_images')
         .select(`
           id,
@@ -137,9 +140,7 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
           photographer_int_id,
           photographer_name,
           photographer_profile_url,
-          created_at,
-          likes_count,
-          comments_count
+          created_at
         `)
         .order('created_at', { ascending: false });
 
@@ -191,9 +192,7 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
 
         const finalData = interleaved.length ? [...interleaved, ...uncategorized] : (data as Photo[]);
         setPhotoData(finalData);
-        // Seed counts from DB persistent fields
-        setLikesCountByPhoto(finalData.reduce((acc, p) => ({ ...acc, [p.id]: p.likes_count || 0 }), {}));
-        setCommentCountByPhoto(finalData.reduce((acc, p) => ({ ...acc, [p.id]: p.comments_count || 0 }), {}));
+        fetchLikesCounts(finalData.map((p) => p.id));
       }
       } catch (error) {
       console.error('Error fetching photos:', error);
@@ -210,7 +209,7 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
   const syncCountsForImage = async (photoId: string) => {
     try {
       const { data, error } = await supabase
-        .from('v_portfolio_images')
+        .from('portfolio_images')
         .select('likes_count, comments_count')
         .eq('id', photoId)
         .maybeSingle();
