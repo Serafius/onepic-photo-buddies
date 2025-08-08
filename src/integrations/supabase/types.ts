@@ -171,6 +171,32 @@ export type Database = {
           },
         ]
       }
+      photographer_mappings: {
+        Row: {
+          created_at: string
+          new_int: number
+          old_uuid: string
+        }
+        Insert: {
+          created_at?: string
+          new_int: number
+          old_uuid: string
+        }
+        Update: {
+          created_at?: string
+          new_int?: number
+          old_uuid?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "photographer_mappings_new_int_fkey"
+            columns: ["new_int"]
+            isOneToOne: false
+            referencedRelation: "Photographers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       photographers: {
         Row: {
           bio: string | null
@@ -376,6 +402,13 @@ export type Database = {
             referencedRelation: "portfolio_posts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "post_images_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "v_portfolio_posts"
+            referencedColumns: ["id"]
+          },
         ]
       }
       Posts: {
@@ -521,11 +554,77 @@ export type Database = {
             referencedRelation: "portfolio_images"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_likes_image_id_fkey"
+            columns: ["image_id"]
+            isOneToOne: false
+            referencedRelation: "v_portfolio_images"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
     Views: {
-      [_ in never]: never
+      v_portfolio_images: {
+        Row: {
+          category_name: string | null
+          created_at: string | null
+          description: string | null
+          id: string | null
+          image_url: string | null
+          photographer_id: string | null
+          photographer_int_id: number | null
+          photographer_name: string | null
+          title: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "photographer_mappings_new_int_fkey"
+            columns: ["photographer_int_id"]
+            isOneToOne: false
+            referencedRelation: "Photographers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portfolio_images_photographer_id_fkey"
+            columns: ["photographer_id"]
+            isOneToOne: false
+            referencedRelation: "photographers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_portfolio_posts: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string | null
+          is_featured: boolean | null
+          likes_count: number | null
+          location: string | null
+          photographer_id: string | null
+          photographer_int_id: number | null
+          title: string | null
+          updated_at: string | null
+          views_count: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "photographer_mappings_new_int_fkey"
+            columns: ["photographer_int_id"]
+            isOneToOne: false
+            referencedRelation: "Photographers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portfolio_posts_photographer_id_fkey"
+            columns: ["photographer_id"]
+            isOneToOne: false
+            referencedRelation: "photographers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never
