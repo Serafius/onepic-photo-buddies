@@ -363,10 +363,12 @@ export type Database = {
           author_avatar_url: string | null
           author_name: string | null
           category_name: string | null
+          comments_count: number
           created_at: string
           description: string | null
           id: string
           image_url: string
+          likes_count: number
           photographer_id: string | null
           title: string | null
         }
@@ -374,10 +376,12 @@ export type Database = {
           author_avatar_url?: string | null
           author_name?: string | null
           category_name?: string | null
+          comments_count?: number
           created_at?: string
           description?: string | null
           id?: string
           image_url: string
+          likes_count?: number
           photographer_id?: string | null
           title?: string | null
         }
@@ -385,10 +389,12 @@ export type Database = {
           author_avatar_url?: string | null
           author_name?: string | null
           category_name?: string | null
+          comments_count?: number
           created_at?: string
           description?: string | null
           id?: string
           image_url?: string
+          likes_count?: number
           photographer_id?: string | null
           title?: string | null
         }
