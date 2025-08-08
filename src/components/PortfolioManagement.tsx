@@ -28,6 +28,7 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
   const [imageDescription, setImageDescription] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [categoryText, setCategoryText] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
   const [portfolioImages, setPortfolioImages] = useState<PortfolioImage[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -149,6 +150,12 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
 
       console.log('Inserting to database with photographer_id and author fields:', photographerId, authorName, authorAvatarUrl);
 
+      const categoryNameToSave =
+        (categoryText && categoryText.trim().length > 0 ? categoryText.trim() : null) ||
+        (selectedCategory
+          ? (categories.find(c => c.id === selectedCategory)?.name ?? null)
+          : null);
+
       const { error: dbError } = await supabase
         .from('portfolio_images')
         .insert({
@@ -156,6 +163,7 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
           image_url: publicUrl,
           title: imageTitle || null,
           description: imageDescription || null,
+          category_name: categoryNameToSave,
           author_name: authorName,
           author_avatar_url: authorAvatarUrl
         });
@@ -173,6 +181,7 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
       setImageTitle("");
       setImageDescription("");
       setImageFile(null);
+      setCategoryText("");
       fetchPortfolioImages();
     } catch (error) {
       console.error('Error uploading image:', error);
@@ -255,7 +264,7 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
           </div>
           {categories.length > 0 && (
             <div className="space-y-2">
-              <Label>Category (Optional)</Label>
+              <Label>Category (Choose from your list)</Label>
               <RadioGroup value={selectedCategory} onValueChange={setSelectedCategory}>
                 {categories.map((category) => (
                   <div key={category.id} className="flex items-center space-x-2">
@@ -266,6 +275,14 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
               </RadioGroup>
             </div>
           )}
+          <div className="space-y-2">
+            <Label>Category (Text Optional)</Label>
+            <Input
+              value={categoryText}
+              onChange={(e) => setCategoryText(e.target.value)}
+              placeholder="e.g., Wedding, Portraits, Landscapes"
+            />
+          </div>
           <div>
             <Label>Upload Image</Label>
             <Input
