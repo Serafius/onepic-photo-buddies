@@ -63,6 +63,7 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
     if (photoData.length === 0) return;
     const ids = photoData.map((p) => p.id);
     fetchLikesCounts(ids);
+    fetchCommentCounts(ids);
   }, [photoData]);
 
   const fetchUserLikes = async () => {
@@ -99,6 +100,26 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
       setLikesCountByPhoto(counts);
     } catch (err) {
       console.error('Error fetching like counts:', err);
+    }
+  };
+
+  const fetchCommentCounts = async (imageIds: string[]) => {
+    try {
+      if (imageIds.length === 0) return;
+      const { data, error } = await supabase
+        .from('image_comments')
+        .select('image_id')
+        .in('image_id', imageIds);
+
+      if (error) throw error;
+
+      const counts: Record<string, number> = {};
+      (data || []).forEach((row: any) => {
+        counts[row.image_id] = (counts[row.image_id] || 0) + 1;
+      });
+      setCommentCountByPhoto(counts);
+    } catch (err) {
+      console.error('Error fetching comment counts:', err);
     }
   };
 
@@ -245,8 +266,16 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
     }
 
     const uid = visitorId || getOrCreateVisitorId();
-    const name = "Guest";
-    const avatar = `https://api.dicebear.com/7.x/thumbs/svg?seed=${uid}`;
+    let name = "Guest";
+    let avatar = `https://api.dicebear.com/7.x/thumbs/svg?seed=${uid}`;
+    try {
+      const authRaw = localStorage.getItem('authUser');
+      if (authRaw) {
+        const a = JSON.parse(authRaw);
+        if (a.displayName) name = a.displayName;
+        if (a.avatarUrl) avatar = a.avatarUrl;
+      }
+    } catch {}
 
     try {
       const { data, error } = await supabase
@@ -266,6 +295,10 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
       setCommentsByPhoto((prev) => ({
         ...prev,
         [photoId]: [...(prev[photoId] || []), data as unknown as ImageComment],
+      }));
+      setCommentCountByPhoto((prev) => ({
+        ...prev,
+        [photoId]: (prev[photoId] || 0) + 1,
       }));
       setCommentText("");
       toast({
@@ -419,12 +452,14 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
                     <Heart 
                       className={`w-6 h-6 ${likedPhotos.includes(photo.id) ? "fill-current" : ""}`} 
                     />
+                    <span className="text-sm">{likesCountByPhoto[photo.id] || 0}</span>
                   </button>
                   <button 
                     onClick={() => handleCommentClick(photo.id)}
                     className="flex items-center space-x-1 text-gray-600 hover:text-primary transition-colors"
                   >
                     <MessageCircle className="w-6 h-6" />
+                    <span className="text-sm">{commentCountByPhoto[photo.id] || 0}</span>
                   </button>
                 </div>
                 <button className="text-gray-600 hover:text-primary transition-colors">
