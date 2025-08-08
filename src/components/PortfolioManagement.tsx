@@ -114,7 +114,36 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
         .from('portfolio')
         .getPublicUrl(filePath);
 
-      console.log('Inserting to database with photographer_id:', photographerId);
+      // Fetch photographer name and avatar for author fields
+      const { data: photographer, error: photographerError } = await supabase
+        .from('photographers')
+        .select('name, user_id')
+        .eq('id', photographerId)
+        .single();
+      if (photographerError) {
+        console.warn('Could not fetch photographer for author fields:', photographerError);
+      }
+
+      let authorName = photographer?.name || null;
+      let authorAvatarUrl: string | null = null;
+
+      if (photographer?.user_id) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('avatar_url')
+          .eq('id', photographer.user_id)
+          .single();
+        if (profileError) {
+          console.warn('Could not fetch profile avatar, will fallback to initials:', profileError);
+        }
+        authorAvatarUrl = profile?.avatar_url || null;
+      }
+
+      if (!authorAvatarUrl && authorName) {
+        authorAvatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(authorName)}`;
+      }
+
+      console.log('Inserting to database with photographer_id and author fields:', photographerId, authorName, authorAvatarUrl);
 
       const { error: dbError } = await supabase
         .from('portfolio_images')
@@ -122,7 +151,9 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
           photographer_id: photographerId,
           image_url: publicUrl,
           title: imageTitle || null,
-          description: imageDescription || null
+          description: imageDescription || null,
+          author_name: authorName,
+          author_avatar_url: authorAvatarUrl
         });
 
       if (dbError) {
