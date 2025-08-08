@@ -85,19 +85,26 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
   const fetchLikesCounts = async (imageIds: string[]) => {
     try {
       if (imageIds.length === 0) return;
-      const { data, error } = await supabase
-        .from('portfolio_images')
-        .select('id, likes_count, comments_count')
-        .in('id', imageIds);
-
-      if (error) throw error;
 
       const likeMap: Record<string, number> = {};
       const commentMap: Record<string, number> = {};
-      (data || []).forEach((row: any) => {
-        likeMap[row.id] = row.likes_count || 0;
-        commentMap[row.id] = row.comments_count || 0;
-      });
+      const chunkSize = 40; // prevent long URLs with large IN clauses
+
+      for (let i = 0; i < imageIds.length; i += chunkSize) {
+        const chunk = imageIds.slice(i, i + chunkSize);
+        const { data, error } = await supabase
+          .from('portfolio_images')
+          .select('id, likes_count, comments_count')
+          .in('id', chunk);
+
+        if (error) throw error;
+
+        (data || []).forEach((row: any) => {
+          likeMap[row.id] = row.likes_count || 0;
+          commentMap[row.id] = row.comments_count || 0;
+        });
+      }
+
       setLikesCountByPhoto(likeMap);
       setCommentCountByPhoto(commentMap);
     } catch (err) {
