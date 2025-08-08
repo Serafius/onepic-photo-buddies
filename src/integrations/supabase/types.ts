@@ -286,6 +286,8 @@ export type Database = {
       }
       portfolio_images: {
         Row: {
+          author_avatar_url: string | null
+          author_name: string | null
           category_name: string | null
           created_at: string
           description: string | null
@@ -295,6 +297,8 @@ export type Database = {
           title: string | null
         }
         Insert: {
+          author_avatar_url?: string | null
+          author_name?: string | null
           category_name?: string | null
           created_at?: string
           description?: string | null
@@ -304,6 +308,8 @@ export type Database = {
           title?: string | null
         }
         Update: {
+          author_avatar_url?: string | null
+          author_name?: string | null
           category_name?: string | null
           created_at?: string
           description?: string | null
