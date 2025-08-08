@@ -267,8 +267,12 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
             <div className="aspect-square relative">
               <img
                 src={photo.image_url}
-                alt={photo.title}
+                alt={photo.title || 'Portfolio image'}
                 className="object-cover w-full h-full"
+                loading="lazy"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = '/placeholder.svg';
+                }}
               />
             </div>
             <div className="p-4 space-y-3">
@@ -301,6 +305,11 @@ export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) =>
                 {photo.photographer_name && (
                   <>
                     <span className="font-medium text-gray-900">{photo.photographer_name}</span>{" "}
+                  </>
+                )}
+                {!photo.photographer_name && photo.title && (
+                  <>
+                    <span className="font-medium text-gray-900">{photo.title}</span>{" "}
                   </>
                 )}
                 {photo.description}
