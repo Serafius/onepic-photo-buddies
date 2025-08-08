@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Images, Upload } from "lucide-react";
+import { Images, Upload, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -151,6 +151,46 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
     }
   };
 
+  const handleDeleteImage = async (image: PortfolioImage) => {
+    try {
+      // Try to delete from storage if it's in our bucket
+      const match = image.image_url.match(/\/storage\/v1\/object\/public\/portfolio\/(.+)$/);
+      const storagePath = match?.[1];
+      if (storagePath) {
+        const { error: storageError } = await supabase.storage
+          .from('portfolio')
+          .remove([storagePath]);
+        if (storageError) {
+          console.warn('Storage delete warning (continuing):', storageError);
+        }
+      }
+
+      // Delete DB record
+      const { error: dbError } = await supabase
+        .from('portfolio_images')
+        .delete()
+        .eq('id', image.id)
+        .eq('photographer_id', photographerId);
+
+      if (dbError) throw dbError;
+
+      toast({
+        title: 'Deleted',
+        description: 'Image removed from your portfolio',
+      });
+
+      // Refresh
+      fetchPortfolioImages();
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete image',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -224,6 +264,17 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
                   className="w-full h-full object-cover rounded-lg"
                 />
                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-4 text-white rounded-lg">
+                  <div className="absolute top-2 right-2">
+                    <Button
+                      size="icon"
+                      variant="destructive"
+                      className="h-8 w-8"
+                      onClick={() => handleDeleteImage(image)}
+                      aria-label="Delete image"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                   {image.title && <h3 className="font-semibold">{image.title}</h3>}
                   {image.description && <p className="text-sm mt-1">{image.description}</p>}
                 </div>

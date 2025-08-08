@@ -21,7 +21,7 @@ interface Photo {
 
 const categoryOrder = ["events", "portraits", "food", "weddings"];
 
-export const BrowsingGrid = () => {
+export const BrowsingGrid = ({ photographerId }: { photographerId?: string }) => {
   const { category } = useParams();
   const { toast } = useToast();
   const [likedPhotos, setLikedPhotos] = useState<string[]>([]);
@@ -44,7 +44,7 @@ export const BrowsingGrid = () => {
       fetchUserLikes();
     }
     console.log("Current category:", category);
-  }, [category, authUserId]);
+  }, [category, authUserId, photographerId]);
 
   const fetchUserLikes = async () => {
     if (!authUserId) return;
@@ -84,6 +84,9 @@ export const BrowsingGrid = () => {
 
       if (category) {
         query = query.ilike('category_name', `%${category}%`);
+      }
+      if (photographerId) {
+        query = query.eq('photographer_id', photographerId);
       }
 
       const { data, error } = await query;

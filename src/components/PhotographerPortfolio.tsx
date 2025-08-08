@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, useParams } from "react-router-dom";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Package, Image, Camera } from "lucide-react";
+import { BrowsingGrid } from "@/components/BrowsingGrid";
 
 interface PortfolioImage {
   id: string;
@@ -320,25 +321,7 @@ export const PhotographerPortfolio = () => {
           <Image className="w-6 h-6" />
           <h2 className="text-2xl font-semibold">Portfolio Gallery</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {images.map((image) => (
-            <Card key={image.id} className="overflow-hidden group hover:shadow-lg transition-all duration-300">
-              <div className="relative aspect-square">
-                <img
-                  src={image.image_url}
-                  alt={image.title || "Portfolio image"}
-                  className="w-full h-full object-cover"
-                />
-                {(image.title || image.description) && (
-                  <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                    {image.title && <h3 className="font-semibold">{image.title}</h3>}
-                    {image.description && <p className="text-sm mt-1">{image.description}</p>}
-                  </div>
-                )}
-              </div>
-            </Card>
-          ))}
-        </div>
+        <BrowsingGrid photographerId={id as string} />
       </section>
     </div>
   );
