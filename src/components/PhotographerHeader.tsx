@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -42,7 +43,7 @@ export function PhotographerHeader({ photographerId, routeId }: PhotographerHead
               .maybeSingle()
           : supabase
               .from("photographers")
-              .select("id, name, specialty, location, city, state, bio, rating, hourly_rate")
+              .select("id, name, specialty, location, city, state, bio, rating, hourly_rate, avatar_url")
               .eq("id", photographerId as string)
               .maybeSingle();
 
@@ -95,7 +96,18 @@ export function PhotographerHeader({ photographerId, routeId }: PhotographerHead
             });
           } else {
             const d: any = pRes.data;
-            setPhotographer({ ...d, avatar_url: null });
+            setPhotographer({
+              id: d.id,
+              name: d.name ?? null,
+              specialty: d.specialty ?? null,
+              location: d.location ?? null,
+              city: d.city ?? null,
+              state: d.state ?? null,
+              bio: d.bio ?? null,
+              rating: d.rating ?? 3.5,
+              avatar_url: d.avatar_url ?? null,
+              hourly_rate: d.hourly_rate ?? (rateRes as any)?.data?.hourly_rate ?? null,
+            });
           }
         }
         setPhotoCount((countRes as any).count ?? 0);

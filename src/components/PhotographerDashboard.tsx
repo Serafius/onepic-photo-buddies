@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -167,8 +168,16 @@ export const PhotographerDashboard = ({ photographerId: propPhotographerId }: Pr
     }
 
     try {
+      // Prefer the resolved UUID; fallback to numeric legacy id if present
       const fileExt = profilePictureFile.name.split('.').pop();
-      const filePath = `profiles/${(photographerNumericId ?? routeParam)}.${fileExt}`;
+      const targetId = resolvedUuid || (photographerNumericId ? String(photographerNumericId) : null);
+
+      if (!targetId) {
+        toast({ title: "Error", description: "Invalid photographer ID", variant: "destructive" });
+        return;
+      }
+
+      const filePath = `profiles/${targetId}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('portfolio')
@@ -180,17 +189,28 @@ export const PhotographerDashboard = ({ photographerId: propPhotographerId }: Pr
         .from('portfolio')
         .getPublicUrl(filePath);
 
-      if (!photographerNumericId) {
-        toast({ title: "Error", description: "Invalid photographer ID", variant: "destructive" });
-        return;
+      // Update modern UUID-based photographers table (avatar_url)
+      if (resolvedUuid) {
+        const { error: modernUpdateError } = await supabase
+          .from('photographers')
+          .update({ avatar_url: publicUrl })
+          .eq('id', resolvedUuid);
+
+        if (modernUpdateError) throw modernUpdateError;
       }
 
-      const { error: dbError } = await supabase
-        .from('Photographers')
-        .update({ profile_picture_url: publicUrl })
-        .eq('id', photographerNumericId);
+      // Also update legacy Photographers table if we have a numeric id
+      if (photographerNumericId) {
+        const { error: legacyUpdateError } = await supabase
+          .from('Photographers')
+          .update({ profile_picture_url: publicUrl })
+          .eq('id', photographerNumericId);
 
-      if (dbError) throw dbError;
+        if (legacyUpdateError) {
+          // Non-fatal: log and continue (legacy table may not always be used)
+          console.warn('Legacy Photographers update warning:', legacyUpdateError);
+        }
+      }
 
       setProfilePictureUrl(publicUrl);
       setProfilePictureFile(null);
@@ -199,7 +219,7 @@ export const PhotographerDashboard = ({ photographerId: propPhotographerId }: Pr
         title: "Success",
         description: "Profile picture updated successfully",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading profile picture:', error);
       toast({
         title: "Error",

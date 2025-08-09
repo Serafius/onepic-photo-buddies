@@ -1,18 +1,59 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 const UUID_REGEX = /^[0-9a-fA-F-]{36}$/;
 
 export const resolvePhotographerUuid = async (routeId?: string): Promise<string | null> => {
   try {
-    // 1) If routeId is already a UUID, use it
-    if (routeId && UUID_REGEX.test(routeId)) {
-      return routeId;
-    }
-
-    // Get current user once (used in multiple branches)
+    // Fetch current user info early so we can create/link records when needed
     const { data: userRes } = await supabase.auth.getUser();
     const userId = userRes?.user?.id ?? null;
     const userEmail = userRes?.user?.email?.toLowerCase() ?? null;
+
+    // 1) If routeId looks like a UUID, ensure it exists in photographers; otherwise fallback to user's photographers row
+    if (routeId && UUID_REGEX.test(routeId)) {
+      // Check if a photographers row already exists with this UUID
+      const { data: existingByUuid } = await supabase
+        .from('photographers')
+        .select('id')
+        .eq('id', routeId)
+        .maybeSingle();
+
+      if (existingByUuid?.id) {
+        return existingByUuid.id as string;
+      }
+
+      // If not found, and the user is authenticated, return/create their photographers row
+      if (userId) {
+        const { data: existingByUser } = await supabase
+          .from('photographers')
+          .select('id')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (existingByUser?.id) {
+          return existingByUser.id as string;
+        }
+
+        if (userEmail) {
+          const { data: created } = await supabase
+            .from('photographers')
+            .insert({
+              user_id: userId,
+              name: userEmail.split('@')[0],
+              hourly_rate: 0,
+            })
+            .select('id')
+            .single();
+
+          if (created?.id) {
+            return created.id as string;
+          }
+        }
+      }
+
+      return null;
+    }
 
     // 2) If routeId is numeric, try mapping, then legacy -> new linkage
     if (routeId && /^\d+$/.test(routeId)) {

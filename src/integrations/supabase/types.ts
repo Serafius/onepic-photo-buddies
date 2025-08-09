@@ -273,6 +273,7 @@ export type Database = {
       }
       photographers: {
         Row: {
+          avatar_url: string | null
           bio: string | null
           city: string | null
           created_at: string
@@ -286,6 +287,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          avatar_url?: string | null
           bio?: string | null
           city?: string | null
           created_at?: string
@@ -299,6 +301,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          avatar_url?: string | null
           bio?: string | null
           city?: string | null
           created_at?: string
