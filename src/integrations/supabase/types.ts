@@ -326,6 +326,7 @@ export type Database = {
           password: string
           profession: string
           profile_picture_url: string | null
+          rating: number
           username: string
         }
         Insert: {
@@ -340,6 +341,7 @@ export type Database = {
           password: string
           profession: string
           profile_picture_url?: string | null
+          rating?: number
           username?: string
         }
         Update: {
@@ -354,6 +356,7 @@ export type Database = {
           password?: string
           profession?: string
           profile_picture_url?: string | null
+          rating?: number
           username?: string
         }
         Relationships: []
