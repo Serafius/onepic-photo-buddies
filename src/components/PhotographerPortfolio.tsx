@@ -1,5 +1,6 @@
 import { useParams } from "react-router-dom";
 import { BrowsingGrid } from "@/components/BrowsingGrid";
+import { PhotographerHeader } from "@/components/PhotographerHeader";
 import { getPhotographerUuidFromRouteId } from "@/utils/photographerIdMapping";
 
 export const PhotographerPortfolio = () => {
@@ -8,6 +9,7 @@ export const PhotographerPortfolio = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <PhotographerHeader photographerId={photographerUuid || undefined} />
       <BrowsingGrid photographerId={photographerUuid || undefined} />
     </div>
   );
