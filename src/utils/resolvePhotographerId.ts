@@ -49,7 +49,7 @@ export const resolvePhotographerUuid = async (routeId?: string): Promise<string 
           .eq('id', newInt)
           .maybeSingle();
 
-        // Only allow linkage if the legacy email matches the current user's email
+        // If a matching legacy row exists for this numeric id and email, link it; otherwise create a fresh profile for the current user
         if (!legacyError && legacy && legacy.email && userEmail && legacy.email.toLowerCase() === userEmail) {
           const insertPayload: any = {
             user_id: userId,
@@ -69,11 +69,28 @@ export const resolvePhotographerUuid = async (routeId?: string): Promise<string 
           if (!createError && created?.id) {
             return created.id as string;
           }
+        } else if (userEmail) {
+          // No matching legacy row; create a minimal photographers profile for this user
+          const minimalPayload: any = {
+            user_id: userId,
+            name: userEmail.split('@')[0],
+            hourly_rate: 0,
+          };
+
+          const { data: createdMinimal, error: createMinimalError } = await supabase
+            .from('photographers')
+            .insert(minimalPayload)
+            .select('id')
+            .single();
+
+          if (!createMinimalError && createdMinimal?.id) {
+            return createdMinimal.id as string;
+          }
         }
       }
     }
 
-    // 3) Fallback to the currently authenticated user's photographer profile
+    // 3) Fallback: if the user is authenticated, ensure they have a photographers profile
     if (userId) {
       const { data: photographer, error: photographerError } = await supabase
         .from('photographers')
@@ -83,6 +100,23 @@ export const resolvePhotographerUuid = async (routeId?: string): Promise<string 
 
       if (!photographerError && photographer?.id) {
         return photographer.id as string;
+      }
+
+      // Create a minimal profile if none exists yet
+      if (userEmail) {
+        const { data: created, error: createError } = await supabase
+          .from('photographers')
+          .insert({
+            user_id: userId,
+            name: userEmail.split('@')[0],
+            hourly_rate: 0,
+          })
+          .select('id')
+          .single();
+
+        if (!createError && created?.id) {
+          return created.id as string;
+        }
       }
     }
 
