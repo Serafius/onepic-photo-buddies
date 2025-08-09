@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2, Eye, Heart, MapPin, Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PortfolioManagement } from "@/components/PortfolioManagement";
-import { getPhotographerUuidFromRouteId } from "@/utils/photographerIdMapping";
+import { resolvePhotographerUuid } from "@/utils/resolvePhotographerId";
 
 interface PortfolioPost {
   id: string;
@@ -32,36 +32,34 @@ export const ManagePortfolio = () => {
   const { id } = useParams<{ id: string }>();
   const [portfolioPosts, setPortfolioPosts] = useState<PortfolioPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [resolvedUuid, setResolvedUuid] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Get the actual photographer UUID from the route ID
-  const photographerUuid = id ? getPhotographerUuidFromRouteId(id) : null;
-
   useEffect(() => {
-    if (photographerUuid) {
-      fetchPortfolioPosts();
-    } else {
-      console.error('Invalid photographer ID:', id);
-      toast({
-        title: "Error",
-        description: "Invalid photographer ID",
-        variant: "destructive",
-      });
-      setIsLoading(false);
-    }
-  }, [photographerUuid]);
+    (async () => {
+      const uuid = await resolvePhotographerUuid(id);
+      setResolvedUuid(uuid);
+      if (uuid) {
+        await fetchPortfolioPosts(uuid);
+      } else {
+        console.error('Invalid photographer ID:', id);
+        toast({ title: 'Error', description: 'Invalid photographer ID', variant: 'destructive' });
+        setIsLoading(false);
+      }
+    })();
+  }, [id]);
 
-  const fetchPortfolioPosts = async () => {
-    if (!photographerUuid) return;
+  const fetchPortfolioPosts = async (photographerUuidParam: string) => {
+    if (!photographerUuidParam) return;
 
     try {
-      console.log('Fetching portfolio posts for photographer UUID:', photographerUuid);
+      console.log('Fetching portfolio posts for photographer UUID:', photographerUuidParam);
       
       // Fetch ONLY posts created by this photographer
       const { data: postsData, error: postsError } = await supabase
         .from('portfolio_posts')
         .select('*')
-        .eq('photographer_id', photographerUuid)
+        .eq('photographer_id', photographerUuidParam)
         .order('created_at', { ascending: false });
 
       if (postsError) throw postsError;
@@ -127,7 +125,9 @@ export const ManagePortfolio = () => {
       });
 
       // Refresh the posts list
-      fetchPortfolioPosts();
+      if (resolvedUuid) {
+        fetchPortfolioPosts(resolvedUuid);
+      }
     } catch (error) {
       console.error('Error deleting post:', error);
       toast({
@@ -146,7 +146,7 @@ export const ManagePortfolio = () => {
     });
   };
 
-  if (!photographerUuid) {
+  if (!resolvedUuid && !isLoading) {
     return (
       <div className="container mx-auto py-8">
         <Card>
@@ -165,7 +165,7 @@ export const ManagePortfolio = () => {
       </div>
 
       {/* Portfolio Management Component */}
-      <PortfolioManagement photographerId={photographerUuid} />
+      {resolvedUuid && <PortfolioManagement photographerId={resolvedUuid} />}
 
       {/* Portfolio Posts Section */}
       <Card>

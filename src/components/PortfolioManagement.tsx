@@ -35,12 +35,14 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
   const { toast } = useToast();
 
   useEffect(() => {
+    if (!photographerId) return;
     fetchCategories();
     fetchPortfolioImages();
   }, [photographerId]);
 
   const fetchCategories = async () => {
     try {
+      if (!photographerId) return;
       console.log('Fetching categories for photographer:', photographerId);
       
       const { data, error } = await supabase
@@ -63,6 +65,7 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
 
   const fetchPortfolioImages = async () => {
     try {
+      if (!photographerId) return;
       console.log('Fetching portfolio images for photographer:', photographerId);
       
       const { data, error } = await supabase
@@ -97,6 +100,10 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
 
     setIsUploading(true);
     try {
+      if (!photographerId) {
+        toast({ title: "Error", description: "Invalid photographer ID", variant: "destructive" });
+        return;
+      }
       const fileExt = imageFile.name.split('.').pop();
       const filePath = `${photographerId}/${crypto.randomUUID()}.${fileExt}`;
 
@@ -197,6 +204,10 @@ export const PortfolioManagement = ({ photographerId }: { photographerId: string
 
   const handleDeleteImage = async (image: PortfolioImage) => {
     try {
+      if (!photographerId) {
+        toast({ title: 'Error', description: 'Invalid photographer ID', variant: 'destructive' });
+        return;
+      }
       // Try to delete from storage if it's in our bucket
       const match = image.image_url.match(/\/storage\/v1\/object\/public\/portfolio\/(.+)$/);
       const storagePath = match?.[1];

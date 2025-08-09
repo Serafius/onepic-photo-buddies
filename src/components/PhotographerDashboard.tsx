@@ -17,7 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "lucide-react";
 import { PortfolioManagement } from "./PortfolioManagement";
-import { getPhotographerUuidFromRouteId } from "@/utils/photographerIdMapping";
+import { resolvePhotographerUuid } from "@/utils/resolvePhotographerId";
 
 interface BookingRequest {
   id: string;
@@ -34,9 +34,7 @@ interface Props {
 export const PhotographerDashboard = ({ photographerId: propPhotographerId }: Props = {}) => {
   const { id } = useParams<{ id: string }>();
   const routeParam = propPhotographerId || id || "1";
-  const photographerUuid = /^[0-9a-fA-F-]{36}$/.test(routeParam)
-    ? routeParam
-    : getPhotographerUuidFromRouteId(routeParam) || null;
+  const [resolvedUuid, setResolvedUuid] = useState<string | null>(null);
   const photographerNumericId = /^\d+$/.test(routeParam) ? parseInt(routeParam) : null;
   const [hourlyRate, setHourlyRate] = useState("");
   const [location, setLocation] = useState("");
@@ -53,8 +51,15 @@ export const PhotographerDashboard = ({ photographerId: propPhotographerId }: Pr
 
   useEffect(() => {
     fetchPhotographerData();
-    fetchBookingRequests();
-  }, [routeParam, photographerUuid]);
+    (async () => {
+      const uuid = await resolvePhotographerUuid(routeParam);
+      setResolvedUuid(uuid);
+      if (uuid) {
+        await fetchBookingRequests();
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeParam]);
 
   const fetchPhotographerData = async () => {
     try {
@@ -91,11 +96,11 @@ export const PhotographerDashboard = ({ photographerId: propPhotographerId }: Pr
 
   const fetchBookingRequests = async () => {
     try {
-      if (!photographerUuid) return;
+      if (!resolvedUuid) return;
       const { data, error } = await supabase
         .from('booking_requests')
         .select('*')
-        .eq('photographer_id', photographerUuid);
+        .eq('photographer_id', resolvedUuid);
 
       if (error) throw error;
 
@@ -215,12 +220,12 @@ export const PhotographerDashboard = ({ photographerId: propPhotographerId }: Pr
     }
 
     try {
-      if (!photographerUuid) {
+      if (!resolvedUuid) {
         toast({ title: "Error", description: "Invalid photographer ID", variant: "destructive" });
         return;
       }
       const fileExt = imageFile.name.split('.').pop();
-      const filePath = `${photographerUuid}/${crypto.randomUUID()}.${fileExt}`;
+      const filePath = `${resolvedUuid}/${crypto.randomUUID()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('portfolio')
@@ -235,7 +240,7 @@ export const PhotographerDashboard = ({ photographerId: propPhotographerId }: Pr
       const { error: dbError } = await supabase
         .from('portfolio_images')
         .insert({
-          photographer_id: photographerUuid,
+          photographer_id: resolvedUuid,
           image_url: publicUrl,
           title: imageTitle,
           description: imageDescription
@@ -365,7 +370,7 @@ export const PhotographerDashboard = ({ photographerId: propPhotographerId }: Pr
       </Card>
 
       {/* Portfolio Management Section */}
-      <PortfolioManagement photographerId={photographerUuid || ""} />
+      <PortfolioManagement photographerId={resolvedUuid || ""} />
 
       {/* Booking Requests Section */}
       <Card>
