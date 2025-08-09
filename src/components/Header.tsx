@@ -1,4 +1,3 @@
-
 import { useToast } from "@/hooks/use-toast";
 import { Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -6,6 +5,8 @@ import { useNavigate } from "react-router-dom";
 import { MobileMenu } from "./MobileMenu";
 import { Navigation } from "./Navigation";
 import { UserActions } from "./UserActions";
+import { supabase } from "@/integrations/supabase/client";
+import { cleanupAuthState } from "@/utils/authCleanup";
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -16,38 +17,85 @@ export const Header = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if user is already signed in (from localStorage or sessionStorage)
+    const checkRole = async (email?: string, uid?: string) => {
+      if (!email && !uid) {
+        setIsPhotographer(false);
+        return;
+      }
+      try {
+        const emailLc = email?.toLowerCase();
+        const [legacyRes, modernRes] = await Promise.all([
+          emailLc
+            ? supabase.from('Photographers').select('id').eq('email', emailLc).maybeSingle()
+            : Promise.resolve({ data: null }),
+          uid
+            ? supabase.from('photographers').select('id').eq('user_id', uid).maybeSingle()
+            : Promise.resolve({ data: null }),
+        ]);
+        const legacy = (legacyRes as any)?.data;
+        const modern = (modernRes as any)?.data;
+        setIsPhotographer(!!(legacy?.id || modern?.id));
+      } catch {
+        setIsPhotographer(false);
+      }
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      const uid = session?.user?.id ?? "";
+      const email = session?.user?.email ?? undefined;
+      setIsAuthenticated(!!session);
+      setUserId(uid);
+      // Defer any Supabase reads to avoid potential deadlocks
+      setTimeout(() => checkRole(email, uid), 0);
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const uid = session?.user?.id ?? "";
+      const email = session?.user?.email ?? undefined;
+      setIsAuthenticated(!!session);
+      setUserId(uid);
+      setTimeout(() => checkRole(email, uid), 0);
+    });
+
+    // Backward compatibility: fall back to legacy localStorage state if no Supabase session
     const authData = localStorage.getItem('authUser');
     if (authData) {
-      const { isPhotographer: storedIsPhotographer, userId: storedUserId } = JSON.parse(authData);
-      setIsAuthenticated(true);
-      setIsPhotographer(storedIsPhotographer);
-      setUserId(storedUserId);
+      try {
+        const { isPhotographer: storedIsPhotographer, userId: storedUserId } = JSON.parse(authData);
+        if (!isAuthenticated) {
+          setIsAuthenticated(true);
+        }
+        setIsPhotographer(!!storedIsPhotographer);
+        setUserId(storedUserId || "");
+      } catch {}
     }
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const handleSignIn = async (isPhotographer: boolean, userId: string, displayName?: string, avatarUrl?: string) => {
+  const handleSignIn = async (isPhotographer: boolean, userId: string) => {
+    // Keep quick UI feedback, but source of truth is Supabase session
     setIsAuthenticated(true);
     setIsPhotographer(isPhotographer);
     setUserId(userId);
-    
-    // Store auth state in localStorage
-    localStorage.setItem('authUser', JSON.stringify({ isPhotographer, userId, displayName, avatarUrl }));
   };
 
   const handleSignOut = async () => {
-    setIsAuthenticated(false);
-    setIsPhotographer(false);
-    setUserId("");
-    
-    // Remove auth state from localStorage
-    localStorage.removeItem('authUser');
-    
-    toast({
-      title: "Signed out",
-      description: "You have been signed out successfully.",
-    });
+    try {
+      cleanupAuthState();
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch {}
+    } finally {
+      toast({
+        title: "Signed out",
+        description: "You have been signed out successfully.",
+      });
+      // Full reload to ensure a clean state
+      window.location.href = "/";
+    }
   };
+
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">

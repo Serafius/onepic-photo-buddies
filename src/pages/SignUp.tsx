@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { cleanupAuthState } from "@/utils/authCleanup";
 
 export const SignUp = () => {
   const [userType, setUserType] = useState<"photographer" | "client" | "">("");
@@ -64,6 +65,16 @@ export const SignUp = () => {
     setIsLoading(true);
 
     try {
+      // 1) Create Supabase Auth user (with email confirmation redirect)
+      const redirectUrl = `${window.location.origin}/`;
+      const { error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: { emailRedirectTo: redirectUrl },
+      });
+      if (authError) throw authError;
+
+      // 2) Maintain legacy compatibility by inserting into role-specific table
       if (userType === "photographer") {
         const { error } = await supabase
           .from("Photographers")
@@ -77,13 +88,7 @@ export const SignUp = () => {
             password: formData.password,
             profession: formData.profession
           }]);
-
         if (error) throw error;
-
-        toast({
-          title: "Photographer account created!",
-          description: "Your photographer account has been successfully created.",
-        });
       } else {
         const { error } = await supabase
           .from("Clients")
@@ -96,16 +101,13 @@ export const SignUp = () => {
             location: formData.location,
             password: formData.password
           }]);
-
         if (error) throw error;
-
-        toast({
-          title: "Client account created!",
-          description: "Your client account has been successfully created.",
-        });
       }
 
-      // Redirect to login page after successful registration
+      toast({
+        title: "Verify your email",
+        description: "We sent you a confirmation link to complete signup.",
+      });
       navigate("/");
     } catch (error: any) {
       console.error("Sign up error:", error);

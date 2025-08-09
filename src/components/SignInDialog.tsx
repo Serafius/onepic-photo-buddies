@@ -12,6 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { cleanupAuthState } from "@/utils/authCleanup";
 
 interface SignInDialogProps {
   onSignIn: (isPhotographer: boolean, userId: string, displayName?: string, avatarUrl?: string) => void;
@@ -37,74 +38,52 @@ export const SignInDialog = ({ onSignIn }: SignInDialogProps) => {
     setIsLoading(true);
 
     try {
-      // First, try to find user in Photographers table
-      const { data: photographerData, error: photographerError } = await supabase
-        .from("Photographers")
-        .select("*")
-        .eq("email", email)
-        .eq("password", password)
-        .single();
+      // Clean up any existing auth state and ensure a clean sign-in
+      cleanupAuthState();
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch {}
 
-      if (photographerData && !photographerError) {
-        // Found photographer
-        onSignIn(
-          true,
-          photographerData.id.toString(),
-          photographerData.name,
-          photographerData.profile_picture_url || undefined
-        );
-        setIsSignInOpen(false);
-        setEmail("");
-        setPassword("");
-        
-        toast({
-          title: "Signed in successfully",
-          description: `Welcome back, ${photographerData.name}!`,
-        });
-        return;
-      }
-
-      // If not found in Photographers, try Clients table
-      const { data: clientData, error: clientError } = await supabase
-        .from("Clients")
-        .select("*")
-        .eq("email", email)
-        .eq("password", password)
-        .single();
-
-      if (clientData && !clientError) {
-        // Found client
-        onSignIn(
-          false,
-          clientData.id.toString(),
-          clientData.name,
-          `https://i.pravatar.cc/150?u=${clientData.id}`
-        );
-        setIsSignInOpen(false);
-        setEmail("");
-        setPassword("");
-        
-        toast({
-          title: "Signed in successfully",
-          description: `Welcome back, ${clientData.name}!`,
-        });
-        return;
-      }
-
-      // No user found in either table
-      toast({
-        title: "Sign in failed",
-        description: "Invalid email or password",
-        variant: "destructive",
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
 
-    } catch (error: any) {
-      console.error("Sign in error:", error);
+      if (error) throw error;
+
       toast({
-        title: "Sign in failed",
-        description: "An error occurred during sign in. Please try again.",
-        variant: "destructive",
+        title: "Signed in",
+        description: "Welcome back!",
       });
+      setIsSignInOpen(false);
+      // Full reload to ensure session is applied everywhere
+      window.location.href = "/";
+      return;
+    } catch (err: any) {
+      // If sign-in fails, offer to create an account and send confirmation email
+      try {
+        const redirectUrl = `${window.location.origin}/`;
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: redirectUrl },
+        });
+        if (!signUpError) {
+          toast({
+            title: "Confirm your email",
+            description: "We sent you a link to complete sign in.",
+          });
+          setIsSignInOpen(false);
+          return;
+        }
+        throw signUpError;
+      } catch (signUpFailure: any) {
+        toast({
+          title: "Sign in failed",
+          description: signUpFailure?.message || "Invalid credentials or sign-up error.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
