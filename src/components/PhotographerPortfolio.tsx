@@ -10,7 +10,7 @@ export const PhotographerPortfolio = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <PhotographerHeader photographerId={photographerUuid || undefined} routeId={id} />
-      <BrowsingGrid photographerId={photographerUuid || undefined} />
+      <BrowsingGrid photographerId={photographerUuid || id} />
     </div>
   );
 };
