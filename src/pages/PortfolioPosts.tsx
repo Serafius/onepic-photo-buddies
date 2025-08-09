@@ -20,6 +20,7 @@ import {
   X 
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { resolvePhotographerUuid } from "@/utils/resolvePhotographerId";
 
 interface Post {
   id: string;
@@ -59,24 +60,39 @@ export const PortfolioPosts = () => {
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   
-  const { toast } = useToast();
+const { toast } = useToast();
+const [resolvedUuid, setResolvedUuid] = useState<string | null>(null);
+const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    fetchPhotographerData();
-    fetchPosts();
+useEffect(() => {
+    (async () => {
+      const uuid = await resolvePhotographerUuid();
+      setResolvedUuid(uuid);
+      if (uuid) {
+        await fetchPhotographerData(uuid);
+        await fetchPosts(uuid);
+      }
+      setIsLoading(false);
+    })();
   }, []);
 
-  const fetchPhotographerData = async () => {
+const fetchPhotographerData = async (photographerId: string) => {
     try {
-      // Using the actual photographer ID that exists in the database
-      const mockPhotographer = {
-        id: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-        name: "Test Photographer",
-        specialty: "Portrait Photography",
-        location: "New York, NY"
-      };
-      
-      setPhotographer(mockPhotographer);
+      const { data, error } = await supabase
+        .from('photographers')
+        .select('id, name, specialty, location')
+        .eq('id', photographerId)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (data) {
+        setPhotographer({
+          id: data.id,
+          name: data.name,
+          specialty: data.specialty,
+          location: data.location,
+        });
+      }
     } catch (error) {
       console.error('Error fetching photographer data:', error);
       toast({
@@ -87,15 +103,12 @@ export const PortfolioPosts = () => {
     }
   };
 
-  const fetchPosts = async () => {
+const fetchPosts = async (photographerId: string) => {
     try {
-      // Using the actual photographer ID that exists in the database
-      const mockPhotographerId = "f47ac10b-58cc-4372-a567-0e02b2c3d479";
-
       const { data: postsData, error: postsError } = await supabase
         .from('portfolio_posts')
         .select('*')
-        .eq('photographer_id', mockPhotographerId)
+        .eq('photographer_id', photographerId)
         .order('created_at', { ascending: false });
 
       if (postsError) throw postsError;
@@ -141,7 +154,7 @@ export const PortfolioPosts = () => {
     setSelectedImages(prev => prev.filter((_, i) => i !== index));
   };
 
-  const createPost = async () => {
+const createPost = async () => {
     if (!newPostTitle.trim()) {
       toast({
         title: "Error",
@@ -160,18 +173,20 @@ export const PortfolioPosts = () => {
       return;
     }
 
+    if (!resolvedUuid) {
+      toast({ title: "Error", description: "Invalid photographer ID", variant: "destructive" });
+      return;
+    }
+
     setIsUploading(true);
     try {
-      // Using the actual photographer ID that exists in the database
-      const mockPhotographerId = "f47ac10b-58cc-4372-a567-0e02b2c3d479";
-
-      console.log('Creating post for photographer:', mockPhotographerId);
+      console.log('Creating post for photographer:', resolvedUuid);
 
       // Create the post first
       const { data: postData, error: postError } = await supabase
         .from('portfolio_posts')
         .insert({
-          photographer_id: mockPhotographerId,
+          photographer_id: resolvedUuid,
           title: newPostTitle,
           description: newPostDescription || null,
           location: newPostLocation || null,
@@ -234,7 +249,7 @@ export const PortfolioPosts = () => {
       setIsCreateDialogOpen(false);
       
       // Refresh posts
-      fetchPosts();
+      fetchPosts(resolvedUuid);
     } catch (error) {
       console.error('Error creating post:', error);
       toast({
@@ -261,7 +276,7 @@ export const PortfolioPosts = () => {
         description: "Post deleted successfully",
       });
 
-      fetchPosts();
+      if (resolvedUuid) { fetchPosts(resolvedUuid); };
     } catch (error) {
       console.error('Error deleting post:', error);
       toast({
@@ -272,10 +287,18 @@ export const PortfolioPosts = () => {
     }
   };
 
-  if (!photographer) {
+if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">Loading photographer data...</div>
+      </div>
+    );
+  }
+
+  if (!resolvedUuid || !photographer) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">Invalid photographer ID</div>
       </div>
     );
   }

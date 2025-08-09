@@ -370,7 +370,18 @@ export const PhotographerDashboard = ({ photographerId: propPhotographerId }: Pr
       </Card>
 
       {/* Portfolio Management Section */}
-      <PortfolioManagement photographerId={resolvedUuid || ""} />
+{resolvedUuid ? (
+        <PortfolioManagement photographerId={resolvedUuid} />
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>Invalid photographer ID</CardTitle>
+          </CardHeader>
+          <CardContent>
+            Please sign in or use a valid photographer link.
+          </CardContent>
+        </Card>
+      )}
 
       {/* Booking Requests Section */}
       <Card>
