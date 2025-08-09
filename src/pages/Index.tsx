@@ -53,7 +53,6 @@ const Index = () => {
       const { data, error } = await supabase
         .from('Photographers')
         .select('id, name, profile_picture_url, profession, location, rating')
-        .order('rating', { ascending: false })
         .limit(5);
 
       if (!error && data) {
@@ -88,7 +87,7 @@ const Index = () => {
               <PhotographerList
                 photographers={topPhotographers}
                 size="compact"
-                title="Top Rated Photographers"
+                title="Photographers"
               />
             </div>
           </div>
