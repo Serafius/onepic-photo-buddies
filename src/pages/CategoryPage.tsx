@@ -34,7 +34,7 @@ export const CategoryPage = () => {
       const from = page * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
 
-      // Query portfolio images filtered by category and join with photographers table
+      // Query portfolio images filtered by category (with synonyms) and join with photographers table
       let query = supabase
         .from('portfolio_images')
         .select(`
@@ -46,8 +46,22 @@ export const CategoryPage = () => {
             name,
             location
           )
-        `)
-        .eq('category_name', category?.toLowerCase()); // Filter by category
+        `);
+
+      // Build case-insensitive filters for common synonyms (e.g., wedding/weddings)
+      const key = category?.toLowerCase() || '';
+      const synonyms = (() => {
+        if (["wedding", "weddings"].includes(key)) return ["wedding", "weddings"];
+        if (["portrait", "portraits"].includes(key)) return ["portrait", "portraits"];
+        if (["event", "events"].includes(key)) return ["event", "events"];
+        if (["food", "foods"].includes(key)) return ["food", "foods"];
+        return key ? [key] : [];
+      })();
+
+      if (synonyms.length > 0) {
+        const orFilter = synonyms.map((s) => `category_name.ilike.%${s}%`).join(',');
+        query = query.or(orFilter);
+      }
 
       // Add location filter if not "All Locations"
       if (selectedLocation !== "All Locations") {
