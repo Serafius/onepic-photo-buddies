@@ -51,39 +51,77 @@ export const PhotographerDashboard = ({ photographerId: propPhotographerId }: Pr
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchPhotographerData();
     (async () => {
       const uuid = await resolvePhotographerUuid(routeParam);
       setResolvedUuid(uuid);
+      await fetchPhotographerData(uuid);
       if (uuid) {
-        await fetchBookingRequests();
+        await fetchBookingRequests(uuid);
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routeParam]);
 
-  const fetchPhotographerData = async () => {
+  const fetchPhotographerData = async (uuid?: string | null) => {
     try {
-      if (!photographerNumericId) {
-        console.warn('No numeric photographer ID; skipping legacy Photographers fetch.');
+      // Prefer modern UUID-based photographers table
+      if (uuid) {
+        const { data: modern, error: modernError } = await supabase
+          .from('photographers')
+          .select('name, specialty, location, bio, avatar_url, hourly_rate')
+          .eq('id', uuid as string)
+          .maybeSingle();
+
+        if (modernError) throw modernError;
+
+        if (modern) {
+          setPhotographerName(modern.name || '');
+          setLocation(modern.location || '');
+          setBio(modern.bio || '');
+          setSpecialty(modern.specialty || '');
+          setProfilePictureUrl(modern.avatar_url || '');
+          setHourlyRate(
+            modern.hourly_rate != null ? String(modern.hourly_rate) : ''
+          );
+        }
+
+        // Fallback to legacy to fill any missing fields if we have a numeric id
+        if (photographerNumericId && (!modern || !modern.name || !modern.location || !modern.bio || !modern.specialty || !modern.avatar_url)) {
+          const { data: legacy, error: legacyError } = await supabase
+            .from('Photographers')
+            .select('name, location, bio, profession, profile_picture_url')
+            .eq('id', photographerNumericId)
+            .maybeSingle();
+
+          if (!legacyError && legacy) {
+            if (!modern?.name) setPhotographerName(legacy.name || '');
+            if (!modern?.location) setLocation(legacy.location || '');
+            if (!modern?.bio) setBio(legacy.bio || '');
+            if (!modern?.specialty) setSpecialty(legacy.profession || '');
+            if (!modern?.avatar_url) setProfilePictureUrl(legacy.profile_picture_url || '');
+          }
+        }
         return;
       }
-      const { data, error } = await supabase
-        .from('Photographers')
-        .select('*')
-        .eq('id', photographerNumericId)
-        .single();
 
-      if (error) throw error;
+      // Legacy only (numeric route id)
+      if (photographerNumericId) {
+        const { data, error } = await supabase
+          .from('Photographers')
+          .select('*')
+          .eq('id', photographerNumericId)
+          .single();
 
-      if (data) {
-        setPhotographerName(data.name || '');
-        setLocation(data.location || '');
-        setBio(data.bio || '');
-        setSpecialty(data.profession || '');
-        setProfilePictureUrl(data.profile_picture_url || '');
-        // Note: Photographers table doesn't have hourly_rate, you may need to add it or use a default
-        setHourlyRate('150'); // Default for now
+        if (error) throw error;
+
+        if (data) {
+          setPhotographerName(data.name || '');
+          setLocation(data.location || '');
+          setBio(data.bio || '');
+          setSpecialty(data.profession || '');
+          setProfilePictureUrl(data.profile_picture_url || '');
+          setHourlyRate(''); // No hourly_rate column in legacy
+        }
       }
     } catch (error) {
       console.error('Error fetching photographer data:', error);
@@ -95,13 +133,14 @@ export const PhotographerDashboard = ({ photographerId: propPhotographerId }: Pr
     }
   };
 
-  const fetchBookingRequests = async () => {
+  const fetchBookingRequests = async (uuidParam?: string | null) => {
     try {
-      if (!resolvedUuid) return;
+      const pid = uuidParam ?? resolvedUuid;
+      if (!pid) return;
       const { data, error } = await supabase
         .from('booking_requests')
         .select('*')
-        .eq('photographer_id', resolvedUuid);
+        .eq('photographer_id', pid);
 
       if (error) throw error;
 
@@ -127,21 +166,38 @@ export const PhotographerDashboard = ({ photographerId: propPhotographerId }: Pr
 
   const updateProfile = async () => {
     try {
-      if (!photographerNumericId) {
-        toast({ title: "Error", description: "Invalid photographer ID", variant: "destructive" });
-        return;
-      }
-      const { error } = await supabase
-        .from('Photographers')
-        .update({
-          name: photographerName,
-          location,
-          bio,
-          profession: specialty
-        })
-        .eq('id', photographerNumericId);
+      // Update modern photographers row when UUID is available
+      if (resolvedUuid) {
+        const { error: modernError } = await supabase
+          .from('photographers')
+          .update({
+            name: photographerName,
+            specialty,
+            location,
+            bio,
+            hourly_rate: Number(hourlyRate) || 0,
+          })
+          .eq('id', resolvedUuid);
 
-      if (error) throw error;
+        if (modernError) throw modernError;
+      }
+
+      // Mirror to legacy table if numeric id exists (best-effort)
+      if (photographerNumericId) {
+        const { error: legacyError } = await supabase
+          .from('Photographers')
+          .update({
+            name: photographerName,
+            location,
+            bio,
+            profession: specialty,
+          })
+          .eq('id', photographerNumericId);
+
+        if (legacyError) {
+          console.warn('Legacy profile update warning:', legacyError);
+        }
+      }
 
       toast({
         title: "Profile Updated",
