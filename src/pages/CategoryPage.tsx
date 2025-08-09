@@ -10,9 +10,8 @@ interface PortfolioImage {
   image_url: string;
   title: string | null;
   description: string | null;
-  photographer: {
-    name: string;
-  } | null;
+  category_name: string | null;
+  photographer_name: string | null;
 }
 
 const ITEMS_PER_PAGE = 9;
@@ -34,21 +33,7 @@ export const CategoryPage = () => {
       const from = page * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
 
-      // Query portfolio images filtered by category (with synonyms) and join with photographers table
-      let query = supabase
-        .from('portfolio_images')
-        .select(`
-          id,
-          image_url,
-          title,
-          description,
-          photographer:photographers!inner (
-            name,
-            location
-          )
-        `);
-
-      // Build case-insensitive filters for common synonyms (e.g., wedding/weddings)
+// Build case-insensitive filters for common synonyms (e.g., wedding/weddings)
       const key = category?.toLowerCase() || '';
       const synonyms = (() => {
         if (["wedding", "weddings"].includes(key)) return ["wedding", "weddings"];
@@ -58,14 +43,43 @@ export const CategoryPage = () => {
         return key ? [key] : [];
       })();
 
+      // Optional: pre-filter photographer IDs by selected location to avoid joins
+      let allowedPhotographerIds: string[] | null = null;
+      if (selectedLocation !== "All Locations") {
+        const { data: photogs, error: photogsError } = await supabase
+          .from('photographers')
+          .select('id, location')
+          .ilike('location', `%${selectedLocation}%`);
+        if (photogsError) throw photogsError;
+        allowedPhotographerIds = (photogs || []).map((p: any) => p.id);
+        if (allowedPhotographerIds.length === 0) {
+          setHasMore(false);
+          return;
+        }
+      }
+
+      // Query view used on the Index page and filter by category_name
+      let query = supabase
+        .from('v_portfolio_images')
+        .select(`
+          id,
+          image_url,
+          title,
+          description,
+          category_name,
+          photographer_name,
+          photographer_id,
+          created_at
+        `)
+        .order('created_at', { ascending: false });
+
       if (synonyms.length > 0) {
         const orFilter = synonyms.map((s) => `category_name.ilike.%${s}%`).join(',');
         query = query.or(orFilter);
       }
 
-      // Add location filter if not "All Locations"
-      if (selectedLocation !== "All Locations") {
-        query = query.eq('photographer.location', selectedLocation);
+      if (allowedPhotographerIds && allowedPhotographerIds.length > 0) {
+        query = query.in('photographer_id', allowedPhotographerIds);
       }
 
       const { data, error } = await query.range(from, to);
@@ -136,8 +150,8 @@ export const CategoryPage = () => {
               />
               <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
                 {image.title && <h3 className="font-semibold">{image.title}</h3>}
-                {image.photographer?.name && (
-                  <p className="text-sm">by {image.photographer.name}</p>
+                {image.photographer_name && (
+                  <p className="text-sm">by {image.photographer_name}</p>
                 )}
                 {image.description && (
                   <p className="text-sm mt-2">{image.description}</p>
