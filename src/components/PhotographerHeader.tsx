@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Star, Image as ImageIcon } from "lucide-react";
+import { MapPin, Star, Image as ImageIcon, CreditCard } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface PhotographerHeaderProps {
@@ -24,6 +24,7 @@ export function PhotographerHeader({ photographerId, routeId }: PhotographerHead
     bio: string | null;
     rating: number | null;
     avatar_url?: string | null;
+    hourly_rate: number | null;
   } | null>(null);
   const [photoCount, setPhotoCount] = useState<number>(0);
   const [categories, setCategories] = useState<string[]>([]);
@@ -41,7 +42,7 @@ export function PhotographerHeader({ photographerId, routeId }: PhotographerHead
               .maybeSingle()
           : supabase
               .from("photographers")
-              .select("id, name, specialty, location, city, state, bio, rating")
+              .select("id, name, specialty, location, city, state, bio, rating, hourly_rate")
               .eq("id", photographerId as string)
               .maybeSingle();
 
@@ -52,6 +53,14 @@ export function PhotographerHeader({ photographerId, routeId }: PhotographerHead
               .eq("photographer_id", photographerId)
           : Promise.resolve({ count: 0 } as any);
 
+        const ratePromise = photographerId
+          ? supabase
+              .from("photographers")
+              .select("hourly_rate")
+              .eq("id", photographerId)
+              .maybeSingle()
+          : Promise.resolve({ data: null } as any);
+
         const catPromise = photographerId
           ? supabase
               .from("photographer_categories")
@@ -60,8 +69,9 @@ export function PhotographerHeader({ photographerId, routeId }: PhotographerHead
               .limit(10)
           : Promise.resolve({ data: [] } as any);
 
-        const [pRes, countRes, catRes] = await Promise.all([
+        const [pRes, rateRes, countRes, catRes] = await Promise.all([
           pPromise,
+          ratePromise,
           countPromise,
           catPromise,
         ]);
@@ -81,6 +91,7 @@ export function PhotographerHeader({ photographerId, routeId }: PhotographerHead
               bio: null,
               rating: d.rating ?? 3.5,
               avatar_url: d.profile_picture_url ?? null,
+              hourly_rate: (rateRes as any)?.data?.hourly_rate ?? null,
             });
           } else {
             const d: any = pRes.data;
@@ -159,6 +170,12 @@ export function PhotographerHeader({ photographerId, routeId }: PhotographerHead
                 <Star className="h-4 w-4" aria-hidden="true" />
                 {rating.toFixed(1)}
               </span>
+              {photographer.hourly_rate != null && (
+                <span className="inline-flex items-center gap-1">
+                  <CreditCard className="h-4 w-4" aria-hidden="true" />
+                  {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(photographer.hourly_rate))}/hr
+                </span>
+              )}
               <span className="inline-flex items-center gap-1">
                 <ImageIcon className="h-4 w-4" aria-hidden="true" />
                 {photoCount} photos
@@ -170,6 +187,12 @@ export function PhotographerHeader({ photographerId, routeId }: PhotographerHead
           <Button asChild>
             <Link to={`/client/sessions?photographer=${photographer.id}`} aria-label={`Book a session with ${name}`}>
               Book session
+            </Link>
+          </Button>
+          <Button variant="secondary" asChild>
+            <Link to={`/client/sessions?photographer=${photographer.id}&action=pay`} aria-label={`Pay ${name}'s rate`}>
+              <CreditCard className="h-4 w-4" />
+              Pay now
             </Link>
           </Button>
         </div>
