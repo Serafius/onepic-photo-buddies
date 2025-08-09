@@ -85,6 +85,25 @@ export const PhotographerDashboard = ({ photographerId: propPhotographerId }: Pr
           );
         }
 
+        // Fallback to legacy by email when modern data is missing or incomplete
+        const { data: userRes } = await supabase.auth.getUser();
+        const userEmail = userRes?.user?.email?.toLowerCase() ?? null;
+        if (userEmail && (!modern || !modern.name || !modern.location || !modern.bio || !modern.specialty || !modern.avatar_url)) {
+          const { data: legacyByEmail, error: legacyByEmailError } = await supabase
+            .from('Photographers')
+            .select('name, location, bio, profession, profile_picture_url')
+            .ilike('email', userEmail)
+            .maybeSingle();
+
+          if (!legacyByEmailError && legacyByEmail) {
+            if (!modern?.name) setPhotographerName(legacyByEmail.name || '');
+            if (!modern?.location) setLocation(legacyByEmail.location || '');
+            if (!modern?.bio) setBio(legacyByEmail.bio || '');
+            if (!modern?.specialty) setSpecialty(legacyByEmail.profession || '');
+            if (!modern?.avatar_url) setProfilePictureUrl(legacyByEmail.profile_picture_url || '');
+          }
+        }
+
         // Fallback to legacy to fill any missing fields if we have a numeric id
         if (photographerNumericId && (!modern || !modern.name || !modern.location || !modern.bio || !modern.specialty || !modern.avatar_url)) {
           const { data: legacy, error: legacyError } = await supabase

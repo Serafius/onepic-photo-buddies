@@ -35,17 +35,20 @@ export function PhotographerHeader({ photographerId, routeId }: PhotographerHead
     async function load() {
       setLoading(true);
       try {
-        const pPromise = routeId
+        const useLegacy = !!(routeId && /^\d+$/.test(routeId));
+        const pPromise = useLegacy
           ? supabase
               .from("Photographers")
               .select("id, name, profile_picture_url, profession, location, city, country, rating")
               .eq("id", Number(routeId))
               .maybeSingle()
-          : supabase
+          : photographerId
+          ? supabase
               .from("photographers")
               .select("id, name, specialty, location, city, state, bio, rating, hourly_rate, avatar_url")
               .eq("id", photographerId as string)
-              .maybeSingle();
+              .maybeSingle()
+          : Promise.resolve({ data: null } as any);
 
         const countPromise = photographerId
           ? supabase
@@ -80,7 +83,7 @@ export function PhotographerHeader({ photographerId, routeId }: PhotographerHead
         if (!isMounted) return;
 
         if (pRes.data) {
-          if (routeId) {
+          if (useLegacy) {
             const d: any = pRes.data;
             setPhotographer({
               id: String(d.id),
