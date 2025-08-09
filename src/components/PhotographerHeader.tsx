@@ -9,9 +9,10 @@ import { Link } from "react-router-dom";
 
 interface PhotographerHeaderProps {
   photographerId?: string;
+  routeId?: string;
 }
 
-export function PhotographerHeader({ photographerId }: PhotographerHeaderProps) {
+export function PhotographerHeader({ photographerId, routeId }: PhotographerHeaderProps) {
   const [loading, setLoading] = useState(true);
   const [photographer, setPhotographer] = useState<{
     id: string;
@@ -22,6 +23,7 @@ export function PhotographerHeader({ photographerId }: PhotographerHeaderProps) 
     state: string | null;
     bio: string | null;
     rating: number | null;
+    avatar_url?: string | null;
   } | null>(null);
   const [photoCount, setPhotoCount] = useState<number>(0);
   const [categories, setCategories] = useState<string[]>([]);
@@ -29,31 +31,64 @@ export function PhotographerHeader({ photographerId }: PhotographerHeaderProps) 
   useEffect(() => {
     let isMounted = true;
     async function load() {
-      if (!photographerId) return;
       setLoading(true);
       try {
+        const pPromise = routeId
+          ? supabase
+              .from("Photographers")
+              .select("id, name, profile_picture_url, profession, location, city, country, rating")
+              .eq("id", Number(routeId))
+              .maybeSingle()
+          : supabase
+              .from("photographers")
+              .select("id, name, specialty, location, city, state, bio, rating")
+              .eq("id", photographerId as string)
+              .maybeSingle();
+
+        const countPromise = photographerId
+          ? supabase
+              .from("portfolio_images")
+              .select("id", { count: "exact", head: true })
+              .eq("photographer_id", photographerId)
+          : Promise.resolve({ count: 0 } as any);
+
+        const catPromise = photographerId
+          ? supabase
+              .from("photographer_categories")
+              .select("name")
+              .eq("photographer_id", photographerId)
+              .limit(10)
+          : Promise.resolve({ data: [] } as any);
+
         const [pRes, countRes, catRes] = await Promise.all([
-          supabase
-            .from("photographers")
-            .select("id, name, specialty, location, city, state, bio, rating")
-            .eq("id", photographerId)
-            .maybeSingle(),
-          supabase
-            .from("portfolio_images")
-            .select("id", { count: "exact", head: true })
-            .eq("photographer_id", photographerId),
-          supabase
-            .from("photographer_categories")
-            .select("name")
-            .eq("photographer_id", photographerId)
-            .limit(10),
+          pPromise,
+          countPromise,
+          catPromise,
         ]);
 
         if (!isMounted) return;
 
-        if (pRes.data) setPhotographer(pRes.data as any);
-        setPhotoCount(countRes.count ?? 0);
-        setCategories((catRes.data ?? []).map((c: any) => c.name).filter(Boolean));
+        if (pRes.data) {
+          if (routeId) {
+            const d: any = pRes.data;
+            setPhotographer({
+              id: String(d.id),
+              name: d.name ?? null,
+              specialty: d.profession ?? null,
+              location: d.location ?? null,
+              city: d.city ?? null,
+              state: d.country ?? null,
+              bio: null,
+              rating: d.rating ?? 3.5,
+              avatar_url: d.profile_picture_url ?? null,
+            });
+          } else {
+            const d: any = pRes.data;
+            setPhotographer({ ...d, avatar_url: null });
+          }
+        }
+        setPhotoCount((countRes as any).count ?? 0);
+        setCategories(((catRes as any).data ?? []).map((c: any) => c.name).filter(Boolean));
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -62,7 +97,7 @@ export function PhotographerHeader({ photographerId }: PhotographerHeaderProps) 
     return () => {
       isMounted = false;
     };
-  }, [photographerId]);
+  }, [photographerId, routeId]);
 
   const displayLocation = useMemo(() => {
     if (!photographer) return null;
@@ -74,7 +109,7 @@ export function PhotographerHeader({ photographerId }: PhotographerHeaderProps) 
     );
   }, [photographer]);
 
-  if (!photographerId) return null;
+  if (!photographerId && !routeId) return null;
 
   if (loading) {
     return (
@@ -106,7 +141,7 @@ export function PhotographerHeader({ photographerId }: PhotographerHeaderProps) 
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center gap-4">
           <Avatar className="h-16 w-16">
-            <AvatarImage loading="lazy" alt={`${name} profile photo`} />
+            <AvatarImage src={photographer.avatar_url ?? undefined} loading="lazy" alt={`${name} profile photo`} />
             <AvatarFallback>{name.charAt(0)}</AvatarFallback>
           </Avatar>
           <div>
